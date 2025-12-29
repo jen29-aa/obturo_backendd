@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+
+# Django
+db.sqlite3
+*.log
+
+# Environment
+.env
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Virtual environment
+*.pyo
+*.pyd
+*.pdb
+
+# Migrations cache
+**/migrations/__pycache__/
+
+# Secrets
+firebase_key.json
+stations/firebase.py
