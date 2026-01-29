@@ -36,6 +36,11 @@ def topsis(matrix, weights, impacts):
     d_worst = np.sqrt(((weighted - ideal_worst) ** 2).sum(axis=1))
 
     # Step 5: TOPSIS score
-    scores = d_worst / (d_best + d_worst)
+    denominator = d_best + d_worst
+    # Handle division by zero - if both distances are 0, assign middle score
+    scores = np.divide(d_worst, denominator, where=denominator!=0, out=np.full_like(d_worst, 0.5))
+    
+    # Convert NaN to 0.5
+    scores = np.nan_to_num(scores, nan=0.5)
 
     return scores.tolist()

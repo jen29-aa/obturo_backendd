@@ -58,25 +58,46 @@ class SmartCarDetailsView(APIView):
 
 class SignupView(APIView):
     def post(self, request):
-        username = request.data.get("username")
-        email = request.data.get("email")
-        password = request.data.get("password")
+        username = request.data.get("username", "").strip()
+        email = request.data.get("email", "").strip()
+        password = request.data.get("password", "")
+
+        # Validate inputs
+        if not username or not email or not password:
+            return Response({"error": "Username, email, and password are required"}, status=400)
+
+        if len(password) < 6:
+            return Response({"error": "Password must be at least 6 characters"}, status=400)
+
+        if len(username) < 3:
+            return Response({"error": "Username must be at least 3 characters"}, status=400)
+
+        if not ("@" in email and "." in email):
+            return Response({"error": "Invalid email format"}, status=400)
 
         if User.objects.filter(username=username).exists():
             return Response({"error": "Username already exists"}, status=400)
 
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-        )
+        if User.objects.filter(email=email).exists():
+            return Response({"error": "Email already registered"}, status=400)
 
-        return Response({"message": "User created successfully"})
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            return Response({"message": "User created successfully", "user_id": user.id}, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
 
 class LoginView(APIView):
     def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
+        username = request.data.get("username", "").strip()
+        password = request.data.get("password", "")
+
+        if not username or not password:
+            return Response({"error": "Username and password are required"}, status=400)
 
         user = User.objects.filter(username=username).first()
 
@@ -88,7 +109,7 @@ class LoginView(APIView):
         return Response({
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-        })
+        }, status=200)
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

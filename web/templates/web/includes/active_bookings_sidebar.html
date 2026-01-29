@@ -1,0 +1,360 @@
+<!-- Active Bookings Sidebar -->
+<div id="activeBookingsSidebar" class="active-bookings-sidebar">
+  <div class="sidebar-header">
+    <h3>Active Bookings</h3>
+    <button class="sidebar-close" onclick="closeSidebar()">&times;</button>
+  </div>
+  
+  <div id="bookingsList" class="bookings-list">
+    <!-- Bookings will be loaded here -->
+    <div class="loading">Loading...</div>
+  </div>
+  
+  <div class="sidebar-footer">
+    <a href="{% url 'bookings' %}" class="view-all-link">View All Bookings →</a>
+  </div>
+</div>
+
+<!-- Sidebar Toggle Button (for mobile) -->
+<button id="sidebarToggleBtn" class="sidebar-toggle-btn" onclick="toggleSidebar()">
+  <span></span>
+  <span id="activeBkgCount" class="badge">0</span>
+</button>
+
+<style>
+  .active-bookings-sidebar {
+    position: fixed;
+    right: -400px;
+    top: 0;
+    width: 380px;
+    height: 100vh;
+    background: white;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .active-bookings-sidebar.open {
+    right: 0;
+  }
+  
+  .sidebar-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  
+  .sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .sidebar-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .bookings-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+  }
+  
+  .booking-item {
+    background: #f8f9fa;
+    border-left: 4px solid #10b981;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .booking-item:hover {
+    background: #ecfdf5;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+  }
+  
+  .booking-station-name {
+    font-weight: 600;
+    color: #10b981;
+    margin: 0 0 8px 0;
+    font-size: 14px;
+  }
+  
+  .booking-details {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.6;
+  }
+  
+  .booking-details-row {
+    display: flex;
+    margin-bottom: 6px;
+  }
+  
+  .booking-details-label {
+    font-weight: 500;
+    width: 60px;
+    color: #333;
+  }
+  
+  .booking-details-value {
+    flex: 1;
+    color: #666;
+  }
+  
+  .booking-time-badge {
+    display: inline-block;
+    background: #ecfdf5;
+    color: #10b981;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  
+  .sidebar-footer {
+    padding: 15px;
+    border-top: 1px solid #e0e0e0;
+    flex-shrink: 0;
+  }
+  
+  .view-all-link {
+    display: block;
+    text-align: center;
+    color: #10b981;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+  
+  .view-all-link:hover {
+    background: #f0f0f0;
+  }
+  
+  .empty-message {
+    text-align: center;
+    color: #999;
+    padding: 30px 15px;
+    font-size: 14px;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 30px 15px;
+    color: #999;
+  }
+  
+  .sidebar-toggle-btn {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    z-index: 999;
+    font-size: 24px;
+    transition: all 0.3s ease;
+  }
+  
+  .sidebar-toggle-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+  }
+  
+  .sidebar-toggle-btn .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4444;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  .booking-item.no-action {
+    cursor: pointer;
+  }
+  
+  @media (max-width: 768px) {
+    .active-bookings-sidebar {
+      width: 100%;
+      right: -100%;
+    }
+    
+    .sidebar-toggle-btn {
+      right: 15px;
+      bottom: 15px;
+      width: 55px;
+      height: 55px;
+      font-size: 20px;
+    }
+  }
+  
+  /* Hide sidebar toggle button on desktop */
+  @media (min-width: 769px) {
+    .sidebar-toggle-btn {
+      bottom: 80px; /* Move up to avoid overlap */
+    }
+    
+    .active-bookings-sidebar {
+      width: 350px;
+      height: 100vh;
+      border-left: 1px solid #e0e0e0;
+    }
+    
+    /* On desktop, sidebar can still be toggled */
+    .active-bookings-sidebar.open {
+      right: 0;
+    }
+  }
+</style>
+
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById('activeBookingsSidebar');
+    const isOpen = sidebar.classList.contains('open');
+    
+    if (isOpen) {
+      sidebar.classList.remove('open');
+    } else {
+      sidebar.classList.add('open');
+      // Reload bookings when opening
+      loadActiveBookings();
+    }
+  }
+  
+  function closeSidebar() {
+    const sidebar = document.getElementById('activeBookingsSidebar');
+    sidebar.classList.remove('open');
+  }
+  
+  function openSidebar() {
+    const sidebar = document.getElementById('activeBookingsSidebar');
+    sidebar.classList.add('open');
+    loadActiveBookings();
+  }
+  
+  function loadActiveBookings() {
+    const token = '{{ auth_token }}';
+    
+    if (!token || token === 'None' || token === '') {
+      document.getElementById('bookingsList').innerHTML = '<div class="empty-message">Please log in to see your bookings</div>';
+      document.getElementById('activeBkgCount').textContent = '0';
+      return;
+    }
+    
+    fetch('/api/bookings/active/', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => {
+      if (response.status === 401) {
+        // Token expired
+        document.getElementById('bookingsList').innerHTML = '<div class="empty-message">Session expired. Please login again.</div>';
+        document.getElementById('activeBkgCount').textContent = '0';
+        return null;
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (!data) return;
+      
+      if (data.count === 0) {
+        document.getElementById('bookingsList').innerHTML = '<div class="empty-message">No active bookings</div>';
+        document.getElementById('activeBkgCount').textContent = '0';
+        return;
+      }
+      
+      let html = '';
+      data.bookings.forEach(booking => {
+        const startTime = new Date(booking.start_time);
+        const endTime = new Date(booking.end_time);
+        const now = new Date();
+        
+        const isOngoing = startTime <= now && now < endTime;
+        const timeStatus = isOngoing ? '🟢 Ongoing' : '🔵 Upcoming';
+        
+        html += `
+          <div class="booking-item no-action" onclick="openBookingDetails(${booking.id})">
+            <h4 class="booking-station-name">${booking.station_name}</h4>
+            <div class="booking-details">
+              <div class="booking-details-row">
+                <span class="booking-details-label">Type:</span>
+                <span class="booking-details-value">${booking.charger_type}</span>
+              </div>
+              <div class="booking-details-row">
+                <span class="booking-details-label">Power:</span>
+                <span class="booking-details-value">${booking.power_kw} kW</span>
+              </div>
+              <div class="booking-details-row">
+                <span class="booking-details-label">🕐 From:</span>
+                <span class="booking-details-value">${startTime.toLocaleString()}</span>
+              </div>
+              <div class="booking-details-row">
+                <span class="booking-details-label">🕑 To:</span>
+                <span class="booking-details-value">${endTime.toLocaleString()}</span>
+              </div>
+              <span class="booking-time-badge">${timeStatus}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      document.getElementById('bookingsList').innerHTML = html;
+      document.getElementById('activeBkgCount').textContent = data.count;
+    })
+    .catch(error => {
+      console.error('Error loading active bookings:', error);
+      document.getElementById('bookingsList').innerHTML = '<div class="empty-message">Error loading bookings</div>';
+    });
+  }
+  
+  function openBookingDetails(bookingId) {
+    // Redirect to bookings page with filter
+    window.location.href = `/bookings/?booking_id=${bookingId}`;
+  }
+  
+  // Load bookings when page loads
+  window.addEventListener('load', loadActiveBookings);
+  
+  // Refresh bookings every 30 seconds
+  setInterval(loadActiveBookings, 30000);
+</script>

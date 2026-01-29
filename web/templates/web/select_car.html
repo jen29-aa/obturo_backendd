@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Obturo - Select Car</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h2 {
+      color: #333;
+      margin-bottom: 30px;
+      font-size: 28px;
+      text-align: center;
+    }
+    
+    .cars-grid {
+      display: grid;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .car-option {
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .car-option:hover {
+      border-color: #667eea;
+      background-color: #f8f9ff;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    }
+    
+    .car-option input[type="radio"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    
+    .car-info {
+      flex: 1;
+    }
+    
+    .car-name {
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .car-specs {
+      font-size: 13px;
+      color: #666;
+      display: flex;
+      gap: 20px;
+    }
+    
+    .spec {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .no-cars {
+      text-align: center;
+      color: #999;
+      padding: 40px 20px;
+    }
+    
+    .current-car-notice {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #2e7d32;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    .selected-indicator {
+      background: #4caf50;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% if username %}
+      <a href="{% url 'profile' %}" class="back-link">← Back to Profile</a>
+    {% endif %}
+    
+    <h2>🚗 Select Your Car</h2>
+    
+    {% if current_car %}
+      <div class="current-car-notice">
+        Currently selected: <strong>{{ current_car.name }}</strong>
+      </div>
+    {% endif %}
+    
+    {% if cars %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="cars-grid">
+          {% for car in cars %}
+            <label class="car-option" style="{% if current_car and current_car.id == car.id %}border-color: #4caf50; background-color: #e8f5e9;{% endif %}">
+              <input type="radio" name="car_id" value="{{ car.id }}" {% if current_car and current_car.id == car.id %}checked{% endif %} required>
+              <div class="car-info">
+                <div class="car-name">
+                  {{ car.name }}
+                  {% if current_car and current_car.id == car.id %}
+                    <span class="selected-indicator">Current</span>
+                  {% endif %}
+                </div>
+                <div class="car-specs">
+                  <span class="spec">{{ car.battery_capacity_kwh }} kWh</span>
+                  <span class="spec">DC: {{ car.max_dc_power_kw }} kW</span>
+                  <span class="spec">AC: {{ car.max_ac_power_kw }} kW</span>
+                </div>
+              </div>
+            </label>
+          {% endfor %}
+        </div>
+        <button type="submit">Continue to Stations →</button>
+      </form>
+    {% else %}
+      <div class="no-cars">No cars found. Please add a car to your account.</div>
+    {% endif %}
+  </div>
+</body>
+</html>

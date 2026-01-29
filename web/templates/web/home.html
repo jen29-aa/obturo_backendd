@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Obturo - Smart EV Charging Network</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+      color: #1f2937;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    
+    /* Navigation */
+    nav {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      padding: 16px 0;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.05);
+    }
+    
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 26px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.5px;
+    }
+    
+    .nav-right {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    
+    .user-welcome {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    
+    .user-welcome strong {
+      color: #10b981;
+    }
+    
+    .logout-btn {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    
+    .logout-btn:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.6);
+      transform: translateY(-2px);
+    }
+    
+    /* Hero Section */
+    .hero-section {
+      position: relative;
+      min-height: 700px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 80px;
+    }
+    
+    .hero-background {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 50%, #f0fdf4 100%);
+      z-index: 1;
+    }
+    
+    .hero-gradient-1 {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+      top: -100px;
+      right: -50px;
+      z-index: 2;
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .hero-gradient-2 {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+      bottom: -100px;
+      left: -50px;
+      z-index: 2;
+      animation: float 8s ease-in-out infinite reverse;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) translateX(0px); }
+      50% { transform: translateY(30px) translateX(20px); }
+    }
+    
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+    }
+    
+    .hero-text h1 {
+      font-size: 56px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+    
+    .hero-text p {
+      font-size: 18px;
+      color: #4b5563;
+      margin-bottom: 12px;
+      line-height: 1.8;
+    }
+    
+    .hero-subtext {
+      font-size: 14px;
+      color: #10b981;
+      font-weight: 600;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .hero-subtext::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      background: rgba(16, 185, 129, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    .hero-visual {
+      position: relative;
+      height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .ev-illustration {
+      width: 100%;
+      max-width: 450px;
+      height: 300px;
+      background: linear-gradient(135deg, rgba(209, 250, 229, 0.3) 0%, rgba(236, 253, 245, 0.2) 100%);
+      border-radius: 20px;
+      border: 2px solid rgba(16, 185, 129, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 120px;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .ev-illustration::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(45deg, transparent 30%, rgba(16, 185, 129, 0.1) 50%, transparent 70%);
+      animation: shine 3s infinite;
+    }
+    
+    .ev-car {
+      position: relative;
+      z-index: 2;
+      animation: driveCar 4s ease-in-out infinite;
+    }
+    
+    @keyframes driveCar {
+      0% { transform: translateX(-20px); }
+      50% { transform: translateX(20px); }
+      100% { transform: translateX(-20px); }
+    }
+    
+    /* Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    
+    /* Stats Section */
+    .stats-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+      margin-bottom: 80px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, rgba(209, 250, 229, 0.3) 0%, rgba(236, 253, 245, 0.2) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 14px;
+      padding: 32px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      border-color: rgba(16, 185, 129, 0.5);
+      background: linear-gradient(135deg, rgba(209, 250, 229, 0.4) 0%, rgba(236, 253, 245, 0.3) 100%);
+      transform: translateY(-4px);
+    }
+    
+    .stat-number {
+      font-size: 42px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: #909090;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .stat-description {
+      font-size: 12px;
+      color: #707070;
+      margin-top: 8px;
+    }
+    
+    /* Section Title */
+    .section-title {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 50px;
+      color: #1f2937;
+      text-align: center;
+    }
+    
+    .section-subtitle {
+      font-size: 14px;
+      color: #10b981;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin-bottom: 80px;
+    }
+    
+    .feature-card {
+      background: linear-gradient(135deg, rgba(209, 250, 229, 0.15) 0%, rgba(236, 253, 245, 0.1) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 16px;
+      padding: 40px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+    
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 0;
+    }
+    
+    .feature-card:hover {
+      border-color: rgba(16, 185, 129, 0.4);
+      transform: translateY(-8px);
+      box-shadow: 0 20px 50px rgba(16, 185, 129, 0.1);
+      background: linear-gradient(135deg, rgba(209, 250, 229, 0.25) 0%, rgba(236, 253, 245, 0.15) 100%);
+    }
+    
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+    
+    .feature-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      display: inline-block;
+      filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.15));
+      position: relative;
+      z-index: 1;
+    }
+    
+    .feature-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1f2937;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .feature-description {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      flex-grow: 1;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .feature-link {
+      display: inline-flex;
+      align-items: center;
+      color: #10b981;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+      gap: 6px;
+      width: fit-content;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .feature-link::after {
+      content: '→';
+      transition: transform 0.2s ease;
+    }
+    
+    .feature-card:hover .feature-link {
+      gap: 12px;
+    }
+    
+    .feature-card:hover .feature-link::after {
+      transform: translateX(4px);
+    }
+    
+    /* Steps Section */
+    .steps-section {
+      margin-bottom: 80px;
+    }
+    
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+    }
+    
+    .step-card {
+      background: linear-gradient(135deg, rgba(209, 250, 229, 0.2) 0%, rgba(236, 253, 245, 0.1) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 12px;
+      padding: 36px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .step-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #10b981, #059669);
+      border-radius: 12px 12px 0 0;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+    
+    .step-card:hover {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: linear-gradient(135deg, rgba(209, 250, 229, 0.3) 0%, rgba(236, 253, 245, 0.2) 100%);
+      transform: translateY(-4px);
+    }
+    
+    .step-card:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .step-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: #10b981;
+      margin-bottom: 12px;
+    }
+    
+    .step-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+    
+    .step-description {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 40px 32px;
+      color: #6b7280;
+      font-size: 13px;
+      border-top: 1px solid rgba(16, 185, 129, 0.1);
+      margin-top: 100px;
+      background: rgba(16, 185, 129, 0.02);
+    }
+    
+    .footer p {
+      margin-bottom: 8px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding: 0 20px;
+      }
+      
+      .hero-text h1 {
+        font-size: 36px;
+      }
+      
+      .container {
+        padding: 0 20px;
+      }
+      
+      .section-title {
+        font-size: 28px;
+      }
+      
+      nav {
+        padding: 12px 0;
+      }
+      
+      .nav-container {
+        padding: 0 20px;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      
+      .nav-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <a href="{% url 'home' %}" style="text-decoration: none;">
+        <div class="logo">Obturo</div>
+      </a>
+      <div style="display: flex; gap: 30px; align-items: center; flex: 1; margin-left: 50px;">
+        <a href="{% url 'home' %}" style="color: #6b7280; text-decoration: none; font-weight: 500; border-bottom: 2px solid #10b981; padding-bottom: 2px;">🏠 Home</a>
+        <a href="{% url 'stations' %}" style="color: #6b7280; text-decoration: none; font-weight: 500;">🔍 Explore</a>
+        <a href="{% url 'bookings' %}" style="color: #6b7280; text-decoration: none; font-weight: 500;">📋 Bookings</a>
+        <a href="{% url 'ranking' %}" style="color: #6b7280; text-decoration: none; font-weight: 500;">Ranking</a>
+        <a href="{% url 'profile' %}" style="color: #6b7280; text-decoration: none; font-weight: 500;">👤 Profile</a>
+      </div>
+      <div class="nav-right">
+        {% if user.is_authenticated %}
+          <div class="user-welcome">Welcome, <strong>{{ user.username }}</strong></div>
+          <a href="{% url 'logout' %}" class="logout-btn">Sign Out</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-background"></div>
+    <div class="hero-gradient-1"></div>
+    <div class="hero-gradient-2"></div>
+    
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1>Power Your Journey</h1>
+        <p>Discover premium EV charging stations with AI-powered recommendations tailored to your needs</p>
+        <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 12px;">
+          <div class="hero-subtext">Real-time availability tracking</div>
+          <div class="hero-subtext">Intelligent price comparison</div>
+          <div class="hero-subtext">Seamless booking experience</div>
+        </div>
+      </div>
+      
+      <div class="hero-visual">
+        <div class="ev-illustration">
+          <svg class="ev-car" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" width="280" height="180">
+            <!-- Car Body -->
+            <defs>
+              <linearGradient id="carGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+              </linearGradient>
+              <linearGradient id="glassGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:0.6" />
+                <stop offset="100%" style="stop-color:#e0f2fe;stop-opacity:0.3" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            
+            <!-- Main Car Body -->
+            <ellipse cx="150" cy="130" rx="95" ry="40" fill="url(#carGradient)" filter="url(#glow)"/>
+            
+            <!-- Car Top -->
+            <path d="M 100 130 Q 100 90 130 80 L 170 80 Q 200 90 200 130" fill="url(#carGradient)" filter="url(#glow)"/>
+            
+            <!-- Front Windows -->
+            <rect x="135" y="85" width="30" height="25" rx="2" fill="url(#glassGradient)" stroke="#10b981" stroke-width="1.5"/>
+            
+            <!-- Rear Window -->
+            <rect x="110" y="95" width="22" height="20" rx="2" fill="url(#glassGradient)" stroke="#10b981" stroke-width="1.5"/>
+            
+            <!-- Left Wheel -->
+            <circle cx="100" cy="165" r="20" fill="#059669"/>
+            <circle cx="100" cy="165" r="16" fill="#1f2937"/>
+            <circle cx="100" cy="165" r="12" fill="#10b981" opacity="0.3"/>
+            <g stroke="#10b981" stroke-width="1.5" opacity="0.6">
+              <line x1="100" y1="150" x2="100" y2="180" />
+              <line x1="85" y1="165" x2="115" y2="165" />
+              <line x1="88" y1="153" x2="112" y2="177" />
+              <line x1="112" y1="153" x2="88" y2="177" />
+            </g>
+            
+            <!-- Right Wheel -->
+            <circle cx="200" cy="165" r="20" fill="#059669"/>
+            <circle cx="200" cy="165" r="16" fill="#1f2937"/>
+            <circle cx="200" cy="165" r="12" fill="#10b981" opacity="0.3"/>
+            <g stroke="#10b981" stroke-width="1.5" opacity="0.6">
+              <line x1="200" y1="150" x2="200" y2="180" />
+              <line x1="185" y1="165" x2="215" y2="165" />
+              <line x1="188" y1="153" x2="212" y2="177" />
+              <line x1="212" y1="153" x2="188" y2="177" />
+            </g>
+            
+            <!-- Headlights -->
+            <circle cx="75" cy="125" r="6" fill="#fbbf24" opacity="0.8" filter="url(#glow)"/>
+            <circle cx="225" cy="125" r="6" fill="#fbbf24" opacity="0.8" filter="url(#glow)"/>
+            
+            <!-- Battery Indicator (animated charge level) -->
+            <g>
+              <rect x="130" y="50" width="40" height="12" rx="2" fill="none" stroke="#10b981" stroke-width="1.5"/>
+              <rect x="132" y="52" width="36" height="8" rx="1" fill="none" stroke="#10b981" stroke-width="1"/>
+              <rect class="battery-charge" x="132" y="52" width="27" height="8" rx="1" fill="#10b981" opacity="0.8"/>
+            </g>
+            
+            <!-- Charging Symbol -->
+            <g class="charge-symbol" opacity="0.9">
+              <text x="150" y="155" font-size="20" fill="#fbbf24" text-anchor="middle" font-weight="bold"></text>
+            </g>
+          </svg>
+          
+          <style>
+            @keyframes wheelSpin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            
+            @keyframes batteryCharge {
+              0%, 100% { width: 15px; }
+              50% { width: 36px; }
+            }
+            
+            @keyframes chargePulse {
+              0%, 100% { opacity: 0.5; transform: scale(1); }
+              50% { opacity: 1; transform: scale(1.1); }
+            }
+            
+            .ev-car {
+              animation: driveCar 4s ease-in-out infinite;
+            }
+            
+            .battery-charge {
+              animation: batteryCharge 2s ease-in-out infinite;
+            }
+            
+            .charge-symbol {
+              animation: chargePulse 2s ease-in-out infinite;
+            }
+          </style>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Main Content -->
+  <div class="container">
+    
+    <!-- Stats Section -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-number">448+</div>
+        <div class="stat-label">Active Stations</div>
+        <div class="stat-description">Across major cities</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">50km</div>
+        <div class="stat-label">Coverage Radius</div>
+        <div class="stat-description">Real-time updates</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Availability</div>
+        <div class="stat-description">Always ready to help</div>
+      </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div style="margin-bottom: 100px;">
+      <div class="section-subtitle">Featured Services</div>
+      <h2 class="section-title">Everything You Need</h2>
+      
+      <div class="features-grid">
+        
+        <!-- Find Stations -->
+        <a href="{% url 'stations' %}" class="feature-card">
+          <div class="feature-icon"></div>
+          <div class="feature-title">Find Stations</div>
+          <div class="feature-description">Browse our network of premium charging stations. Filter by location, price, power output, and more.</div>
+          <div class="feature-link">Explore Now</div>
+        </a>
+        
+        <!-- Smart Ranking -->
+        <a href="{% url 'ranking' %}" class="feature-card">
+          <div class="feature-icon"></div>
+          <div class="feature-title">Smart Ranking</div>
+          <div class="feature-description">AI-powered rankings tailored to your priorities. Adjust weights and find the perfect station instantly.</div>
+          <div class="feature-link">Rank Stations</div>
+        </a>
+        
+        <!-- Bookings -->
+        <a href="{% url 'bookings' %}" class="feature-card">
+          <div class="feature-icon"></div>
+          <div class="feature-title">My Bookings</div>
+          <div class="feature-description">Manage all your charging reservations. Track status, access history, and get real-time notifications.</div>
+          <div class="feature-link">View Bookings</div>
+        </a>
+        
+        <!-- Favorites -->
+        <a href="{% url 'favorites' %}" class="feature-card">
+          <div class="feature-icon"></div>
+          <div class="feature-title">Favorites</div>
+          <div class="feature-description">Save your preferred stations for quick access. Build your personal charging network.</div>
+          <div class="feature-link">My Favorites</div>
+        </a>
+        
+        <!-- Profile -->
+        <a href="{% url 'profile' %}" class="feature-card">
+          <div class="feature-icon"></div>
+          <div class="feature-title">Settings</div>
+          <div class="feature-description">Manage your account, vehicles, preferences, and notification settings in one place.</div>
+          <div class="feature-link">Go To Settings</div>
+        </a>
+        
+        <!-- Community -->
+        <a href="{% url 'peer_chargers' %}" class="feature-card">
+          <div class="feature-icon"></div>
+          <div class="feature-title">Community</div>
+          <div class="feature-description">Connect with EV owners. Share experiences, recommendations, and support each other.</div>
+          <div class="feature-link">Join Network</div>
+        </a>
+        
+        <!-- Plan Charging Journey -->
+        <a href="{% url 'route_map' %}" class="feature-card">
+          <div class="feature-icon"></div>
+          <div class="feature-title">Plan Journey</div>
+          <div class="feature-description">Plan your long-distance journey with optimized charging stops. Get real-time route recommendations based on your vehicle.</div>
+          <div class="feature-link">Plan Now</div>
+        </a>
+        
+      </div>
+    </div>
+    
+    <!-- Getting Started -->
+    <div class="steps-section">
+      <div class="section-subtitle">Quick Start</div>
+      <h2 class="section-title">Get Started in 3 Steps</h2>
+      
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-title">Add Your Vehicle</div>
+          <div class="step-description">Select your EV model to get personalized recommendations based on your vehicle's charging profile.</div>
+        </div>
+        
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-title">Find Stations</div>
+          <div class="step-description">Search nearby or use smart ranking to find the perfect charging station for your needs.</div>
+        </div>
+        
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-title">Book & Charge</div>
+          <div class="step-description">Reserve your slot and receive live updates. Start charging with just a few taps.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <div class="footer">
+    <p>© 2026 Obturo. Intelligent EV Charging for Everyone.</p>
+    <p>Powering the future of electric mobility</p>
+  </div>
+  
+  <!-- Include Sidebar Navigation -->
+  {% include 'web/includes/sidebar_nav.html' %}
+  
+  <!-- Include Active Bookings Sidebar -->
+  {% include 'web/includes/active_bookings_sidebar.html' %}
+</body>
+</html>

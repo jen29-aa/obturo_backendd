@@ -1,0 +1,186 @@
+<!-- Floating Charging Widget - Shows at bottom when charging session active -->
+<div id="chargingWidget" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: white; border-top: 3px solid #10b981; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); cursor: pointer;" onclick="openChargingSession()">
+  <div style="max-width: 1400px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <!-- Left: Status Badge -->
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="background: #ecfdf5; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-bolt" style="color: #10b981; font-size: 20px;"></i>
+      </div>
+      <div>
+        <div style="color: #10b981; font-weight: 700; font-size: 13px; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Charging Active</div>
+        <div style="color: #6b7280; font-size: 13px;" id="widgetStation">Loading...</div>
+      </div>
+    </div>
+    
+    <!-- Middle: Battery + Percentage -->
+    <div style="flex: 1; max-width: 350px; display: flex; align-items: center; gap: 14px;">
+      <div style="flex: 1; background: #f3f4f6; border-radius: 10px; height: 28px; overflow: hidden; position: relative; border: 2px solid #e5e7eb;">
+        <div id="widgetBatteryFill" style="position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, #10b981 0%, #34d399 100%); width: 0%; transition: width 1s ease; display: flex; align-items: center; justify-content: center;">
+          <span id="widgetBatteryText" style="font-size: 12px; font-weight: 700; color: white;"></span>
+        </div>
+      </div>
+      <div style="color: #10b981; font-weight: 700; font-size: 26px; min-width: 65px; text-align: right;" id="widgetPercent">0%</div>
+    </div>
+    
+    <!-- Right: Quick Stats -->
+    <div style="display: flex; gap: 20px;">
+      <div style="text-align: center; padding: 0 12px; border-left: 1px solid #e5e7eb;">
+        <div style="font-size: 10px; color: #9ca3af; margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Time</div>
+        <div style="font-weight: 700; font-size: 15px; color: #1f2937;" id="widgetTime">0min</div>
+      </div>
+      <div style="text-align: center; padding: 0 12px; border-left: 1px solid #e5e7eb;">
+        <div style="font-size: 10px; color: #9ca3af; margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Energy</div>
+        <div style="font-weight: 700; font-size: 15px; color: #1f2937;" id="widgetEnergy">0kWh</div>
+      </div>
+      <div style="text-align: center; padding: 0 12px; border-left: 1px solid #e5e7eb;">
+        <div style="font-size: 10px; color: #9ca3af; margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Cost</div>
+        <div style="font-weight: 700; font-size: 15px; color: #1f2937;" id="widgetCost">₹0</div>
+      </div>
+    </div>
+    
+    <!-- Arrow -->
+    <div style="color: #10b981; font-size: 18px; margin-left: 8px;">
+      <i class="fas fa-chevron-up"></i>
+    </div>
+  </div>
+</div>
+
+<style>
+#chargingWidget {
+  transition: all 0.3s ease;
+}
+
+#chargingWidget:hover {
+  box-shadow: 0 -6px 24px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  #chargingWidget > div {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  #chargingWidget > div > div:nth-child(3) {
+    display: none;
+  }
+}
+</style>
+
+<script>
+(function initChargingWidget() {
+  const BATTERY_CAPACITY_KWH = 50;
+  let widgetTimer = null;
+  
+  function checkForActiveSession() {
+    // Check all stations for active sessions
+    const allKeys = Object.keys(localStorage).filter(k => k.startsWith('obturo.session.'));
+    
+    for (const key of allKeys) {
+      try {
+        const state = JSON.parse(localStorage.getItem(key));
+        if (state && state.active) {
+          const stationId = key.replace('obturo.session.', '');
+          showWidget(stationId, state);
+          startWidgetUpdates(stationId, state);
+          return;
+        }
+      } catch (e) {
+        console.warn('Error checking session', e);
+      }
+    }
+    
+    // No active session found
+    hideWidget();
+  }
+  
+  function showWidget(stationId, state) {
+    const widget = document.getElementById('chargingWidget');
+    if (widget) {
+      widget.style.display = 'block';
+      widget.dataset.stationId = stationId;
+      
+      // Add bottom padding to body to prevent content being hidden
+      document.body.style.paddingBottom = '90px';
+    }
+  }
+  
+  function hideWidget() {
+    const widget = document.getElementById('chargingWidget');
+    if (widget) {
+      widget.style.display = 'none';
+      document.body.style.paddingBottom = '0';
+    }
+    if (widgetTimer) {
+      clearInterval(widgetTimer);
+      widgetTimer = null;
+    }
+  }
+  
+  function updateWidget(stationId, state) {
+    if (!state.active) {
+      hideWidget();
+      return;
+    }
+    
+    const now = Date.now();
+    const elapsedMin = (now - state.startTs) / 60000;
+    const powerKw = state.power_kw || 30;
+    const energyKwh = (elapsedMin / 60) * powerKw;
+    const cost = energyKwh * (state.price_per_kwh || 18);
+    
+    const startPercent = state.startBattery || 20;
+    const targetPercent = state.targetBattery || 80;
+    const currentPercent = Math.min(targetPercent, startPercent + (energyKwh / BATTERY_CAPACITY_KWH) * 100);
+    
+    document.getElementById('widgetStation').textContent = state.stationName || 'Charging Station';
+    document.getElementById('widgetPercent').textContent = `${Math.round(currentPercent)}%`;
+    document.getElementById('widgetBatteryFill').style.width = `${currentPercent}%`;
+    document.getElementById('widgetBatteryText').textContent = `${Math.round(currentPercent)}%`;
+    document.getElementById('widgetTime').textContent = `${elapsedMin.toFixed(0)}min`;
+    document.getElementById('widgetEnergy').textContent = `${energyKwh.toFixed(1)}kWh`;
+    document.getElementById('widgetCost').textContent = `₹${cost.toFixed(0)}`;
+    
+    // Check if booking time has ended
+    const bookingEnded = state.bookingEndTime && now > state.bookingEndTime;
+    
+    // Auto-stop if reached target, timeout, or booking ended
+    if (currentPercent >= targetPercent || elapsedMin >= 90 || bookingEnded) {
+      state.active = false;
+      localStorage.setItem(`obturo.session.${stationId}`, JSON.stringify(state));
+      hideWidget();
+      
+      // Show alert if booking ended
+      if (bookingEnded) {
+        console.log('Charging stopped: Booking time ended');
+      }
+    }
+  }
+  
+  function startWidgetUpdates(stationId, state) {
+    if (widgetTimer) clearInterval(widgetTimer);
+    
+    updateWidget(stationId, state);
+    widgetTimer = setInterval(() => {
+      const key = `obturo.session.${stationId}`;
+      const latestState = JSON.parse(localStorage.getItem(key) || '{}');
+      if (latestState.active) {
+        updateWidget(stationId, latestState);
+      } else {
+        hideWidget();
+      }
+    }, 3000);
+  }
+  
+  window.openChargingSession = function() {
+    const widget = document.getElementById('chargingWidget');
+    const stationId = widget?.dataset?.stationId;
+    if (stationId) {
+      window.location.href = `/charging-session/?station=${stationId}`;
+    }
+  };
+  
+  // Check on load and every 5 seconds
+  checkForActiveSession();
+  setInterval(checkForActiveSession, 5000);
+})();
+</script>

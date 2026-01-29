@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard - Obturo</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f7fa;
+      color: #2c3e50;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .header-content {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    
+    .btn-light {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .btn-light:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .tab {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .tab:hover {
+      color: #667eea;
+    }
+    
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.2s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+    
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    
+    .stat-icon.blue { background: #e3f2fd; color: #2196f3; }
+    .stat-icon.green { background: #e8f5e9; color: #4caf50; }
+    .stat-icon.purple { background: #f3e5f5; color: #9c27b0; }
+    .stat-icon.orange { background: #fff3e0; color: #ff9800; }
+    .stat-icon.red { background: #ffebee; color: #f44336; }
+    
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 8px;
+    }
+    
+    .stat-change {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .stat-change.positive { color: #4caf50; }
+    .stat-change.negative { color: #f44336; }
+    
+    .chart-container {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+    
+    .chart-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+    
+    .data-table {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    
+    .table-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .table-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    
+    .search-box {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 16px 24px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+      font-size: 13px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .badge.success { background: #e8f5e9; color: #2e7d32; }
+    .badge.warning { background: #fff3e0; color: #e65100; }
+    .badge.danger { background: #ffebee; color: #c62828; }
+    .badge.info { background: #e3f2fd; color: #1565c0; }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px;
+    }
+    
+    .page-btn {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    .page-btn:hover {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .page-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <h1><i class="fas fa-chart-line"></i> Admin Dashboard</h1>
+      <div class="header-actions">
+        <a href="/stations/" class="btn btn-light"><i class="fas fa-home"></i> Back to Site</a>
+        <a href="/profile/" class="btn btn-light"><i class="fas fa-user"></i> Profile</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="container">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview')"><i class="fas fa-chart-pie"></i> Overview</button>
+      <button class="tab" onclick="switchTab('revenue')"><i class="fas fa-rupee-sign"></i> Revenue</button>
+      <button class="tab" onclick="switchTab('users')"><i class="fas fa-users"></i> Users</button>
+      <button class="tab" onclick="switchTab('stations')"><i class="fas fa-charging-station"></i> Stations</button>
+      <button class="tab" onclick="switchTab('bookings')"><i class="fas fa-calendar-check"></i> Bookings</button>
+    </div>
+    
+    <!-- Overview Tab -->
+    <div id="overview" class="tab-content active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-label">Total Users</div>
+              <div class="stat-value" id="totalUsers">-</div>
+              <div class="stat-change positive" id="userChange">-</div>
+            </div>
+            <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-label">Total Bookings</div>
+              <div class="stat-value" id="totalBookings">-</div>
+              <div class="stat-change positive" id="bookingChange">-</div>
+            </div>
+            <div class="stat-icon green"><i class="fas fa-calendar"></i></div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-label">Revenue</div>
+              <div class="stat-value" id="totalRevenue">-</div>
+              <div class="stat-change positive">Estimated</div>
+            </div>
+            <div class="stat-icon purple"><i class="fas fa-rupee-sign"></i></div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <div>
+              <div class="stat-label">Utilization</div>
+              <div class="stat-value" id="utilization">-</div>
+              <div class="stat-change">Capacity</div>
+            </div>
+            <div class="stat-icon orange"><i class="fas fa-bolt"></i></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <div class="chart-title">Daily Bookings (Last 7 Days)</div>
+        <canvas id="dailyBookingsChart"></canvas>
+      </div>
+      
+      <div class="data-table">
+        <div class="table-header">
+          <div class="table-title">Top Performing Stations</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Station Name</th>
+              <th>Bookings</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="topStationsTable">
+            <tr><td colspan="3" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Revenue Tab -->
+    <div id="revenue" class="tab-content">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading revenue data...</p>
+      </div>
+    </div>
+    
+    <!-- Users Tab -->
+    <div id="users" class="tab-content">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading user data...</p>
+      </div>
+    </div>
+    
+    <!-- Stations Tab -->
+    <div id="stations" class="tab-content">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading station data...</p>
+      </div>
+    </div>
+    
+    <!-- Bookings Tab -->
+    <div id="bookings" class="tab-content">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading booking data...</p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const AUTH_TOKEN = "{{ auth_token }}";
+    let dailyBookingsChart = null;
+    
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      
+      // Load tab data
+      if (tabName === 'overview') loadOverview();
+      else if (tabName === 'revenue') loadRevenue();
+      else if (tabName === 'users') loadUsers();
+      else if (tabName === 'stations') loadStations();
+      else if (tabName === 'bookings') loadBookingAnalytics();
+    }
+    
+    async function loadOverview() {
+      try {
+        console.log('Fetching overview data...');
+        const response = await fetch('/api/admin/dashboard/stats/', {
+          headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+        });
+        console.log('Overview response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Overview data:', data);
+        
+        // Update stats cards
+        document.getElementById('totalUsers').textContent = data.overview.total_users;
+        document.getElementById('totalBookings').textContent = data.overview.total_bookings;
+        document.getElementById('totalRevenue').textContent = `₹${data.overview.estimated_revenue.toLocaleString()}`;
+        document.getElementById('utilization').textContent = `${data.overview.utilization_rate}%`;
+        
+        document.getElementById('userChange').textContent = `+${data.recent_activity.new_users_30d} this month`;
+        document.getElementById('bookingChange').textContent = `${data.recent_activity.bookings_7d} this week`;
+        
+        // Update chart
+        renderDailyBookingsChart(data.daily_bookings);
+        
+        // Update top stations table
+        renderTopStations(data.top_stations);
+        
+      } catch (error) {
+        console.error('Error loading overview:', error);
+        alert(`Error loading dashboard: ${error.message}\n\nPlease check the browser console for details.`);
+      }
+    }
+    
+    function renderDailyBookingsChart(data) {
+      const ctx = document.getElementById('dailyBookingsChart');
+      if (dailyBookingsChart) dailyBookingsChart.destroy();
+      
+      dailyBookingsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map(d => new Date(d.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})),
+          datasets: [{
+            label: 'Bookings',
+            data: data.map(d => d.count),
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+    
+    function renderTopStations(stations) {
+      const tbody = document.getElementById('topStationsTable');
+      tbody.innerHTML = stations.map(station => `
+        <tr>
+          <td><strong>${station.station__name}</strong></td>
+          <td>${station.booking_count} bookings</td>
+          <td><span class="badge success">Active</span></td>
+        </tr>
+      `).join('');
+    }
+    
+    async function loadRevenue() {
+      // Implementation for revenue tab
+      const content = document.getElementById('revenue');
+      content.innerHTML = '<div class="chart-container"><div class="chart-title">Revenue Analytics</div><canvas id="revenueChart"></canvas></div>';
+      
+      try {
+        const response = await fetch('/api/admin/revenue/', {
+          headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+        });
+        const data = await response.json();
+        // Render revenue charts
+      } catch (error) {
+        console.error('Error loading revenue:', error);
+      }
+    }
+    
+    async function loadUsers() {
+      // Implementation for users tab
+      const content = document.getElementById('users');
+      content.innerHTML = `
+        <div class="data-table">
+          <div class="table-header">
+            <div class="table-title">User Management</div>
+            <input type="text" class="search-box" placeholder="Search users..." onkeyup="searchUsers(this.value)">
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Bookings</th>
+                <th>Joined</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable">
+              <tr><td colspan="5" class="loading">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      try {
+        console.log('Fetching users data...');
+        const response = await fetch('/api/admin/users/', {
+          headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+        });
+        console.log('Users response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Users data:', data);
+        
+        if (data.users && data.users.length > 0) {
+          renderUsers(data.users);
+        } else {
+          document.getElementById('usersTable').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #666;">No users found</td></tr>';
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+        document.getElementById('usersTable').innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: #f44336;">Error loading users: ${error.message}</td></tr>`;
+      }
+    }
+    
+    function renderUsers(users) {
+      const tbody = document.getElementById('usersTable');
+      tbody.innerHTML = users.map(user => `
+        <tr>
+          <td><strong>${user.username}</strong></td>
+          <td>${user.email}</td>
+          <td>${user.total_bookings}</td>
+          <td>${new Date(user.date_joined).toLocaleDateString()}</td>
+          <td><span class="badge ${user.is_active ? 'success' : 'danger'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
+        </tr>
+      `).join('');
+    }
+    
+    async function loadStations() {
+      const content = document.getElementById('stations');
+      content.innerHTML = `
+        <div class="data-table">
+          <div class="table-header">
+            <div class="table-title">Station Management</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Station Name</th>
+                <th>Location</th>
+                <th>Slots</th>
+                <th>Utilization</th>
+                <th>Bookings</th>
+                <th>Rating</th>
+              </tr>
+            </thead>
+            <tbody id="stationsTable">
+              <tr><td colspan="6" class="loading">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      try {
+        console.log('Fetching stations data...');
+        const response = await fetch('/api/admin/stations/', {
+          headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+        });
+        console.log('Stations response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Stations data:', data);
+        
+        if (data.stations && data.stations.length > 0) {
+          renderStations(data.stations);
+        } else {
+          document.getElementById('stationsTable').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">No stations found</td></tr>';
+        }
+      } catch (error) {
+        console.error('Error loading stations:', error);
+        document.getElementById('stationsTable').innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #f44336;">Error: ${error.message}</td></tr>`;
+      }
+    }
+    
+    function renderStations(stations) {
+      const tbody = document.getElementById('stationsTable');
+      tbody.innerHTML = stations.map(station => `
+        <tr>
+          <td><strong>${station.name}</strong></td>
+          <td>${station.address}</td>
+          <td>${station.available_slots}/${station.total_slots}</td>
+          <td>${station.utilization_rate}%</td>
+          <td>${station.total_bookings}</td>
+          <td>${station.avg_rating}</td>
+        </tr>
+      `).join('');
+    }
+    
+    async function loadBookingAnalytics() {
+      const content = document.getElementById('bookings');
+      content.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading booking analytics...</p></div>';
+      
+      try {
+        console.log('Fetching bookings analytics...');
+        const response = await fetch('/api/admin/bookings/analytics/', {
+          headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+        });
+        console.log('Bookings analytics response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Bookings analytics data:', data);
+        
+        // Render booking analytics
+        content.innerHTML = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Bookings</div>
+              <div class="stat-value">${data.summary.total_bookings}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Cancelled</div>
+              <div class="stat-value">${data.summary.cancelled_bookings}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Cancellation Rate</div>
+              <div class="stat-value">${data.summary.cancellation_rate}%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avg Duration</div>
+              <div class="stat-value">${data.summary.avg_duration_hours}h</div>
+            </div>
+          </div>
+          
+          <div class="chart-container">
+            <div class="chart-title">Status Distribution</div>
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.status_distribution.map(item => `
+                  <tr>
+                    <td><span class="badge ${item.status === 'active' ? 'success' : item.status === 'cancelled' ? 'danger' : 'info'}">${item.status}</span></td>
+                    <td>${item.count}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="chart-container">
+            <div class="chart-title">Peak Usage Hours</div>
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Hour</th>
+                  <th>Bookings</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.peak_hours.map(item => `
+                  <tr>
+                    <td>${item.hour}:00</td>
+                    <td>${item.count}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+        
+      } catch (error) {
+        console.error('Error loading bookings:', error);
+        content.innerHTML = `<div style="text-align: center; padding: 40px; color: #f44336;">Error loading booking analytics: ${error.message}</div>`;
+      }
+    }
+    
+    // Load overview on page load
+    loadOverview();
+  </script>
+</body>
+</html>

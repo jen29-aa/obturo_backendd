@@ -5,10 +5,16 @@ from rest_framework.views import APIView
 
 from django.utils import timezone
 from django.db import models
+from django.db.models import Q
 from django.db import transaction
 from datetime import datetime, timedelta
 import math
 import numpy as np
+import threading
+import asyncio
+import json
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from .models import (
     ChargingStation,
@@ -28,6 +34,7 @@ from .serializers import (
     PeerChargerSerializer,
     PeerBookingSerializer,
 )
+from .email_service import send_booking_confirmation_email, send_waitlist_notification_email
 from accounts.models import UserCar, DeviceToken
 from .firebase import send_push_notification
 
@@ -56,15 +63,53 @@ def add_penalty(user, points):
 
     # Blocking rules (example thresholds)
     try:
-        if pen.penalty_points >= 5:
-            pen.blocked_until = timezone.now() + timedelta(days=7)
-        elif pen.penalty_points >= 3:
-            pen.blocked_until = timezone.now() + timedelta(hours=24)
+        # Keep blocks very short; max 5 minutes
+        if pen.penalty_points >= 3:
+            pen.blocked_until = timezone.now() + timedelta(minutes=5)
     except Exception:
         # if blocked_until field not present, ignore
         pass
 
     pen.save()
+
+# -------------------------
+# Utility: broadcast slot update via WebSocket
+# -------------------------
+def broadcast_slot_update(station_id):
+    """Broadcast slot update to all WebSocket clients for a station"""
+    try:
+        channel_layer = get_channel_layer()
+        station = ChargingStation.objects.get(id=station_id)
+        
+        now = timezone.now()
+        active_bookings = Booking.objects.filter(
+            station=station,
+            start_time__lte=now,
+            end_time__gte=now,
+            status='active'
+        ).count()
+        
+        data = {
+            'id': station.id,
+            'name': station.name,
+            'available_slots': station.available_slots,
+            'total_slots': station.total_slots,
+            'active_bookings': active_bookings,
+            'status': station.status,
+            'price_per_kwh': float(station.price_per_kwh),
+            'power_kw': float(station.power_kw),
+            'timestamp': timezone.now().isoformat(),
+        }
+        
+        async_to_sync(channel_layer.group_send)(
+            f'station_{station_id}',
+            {
+                'type': 'slots_update',
+                'data': data
+            }
+        )
+    except Exception as e:
+        print(f"[Broadcast Error] Failed to broadcast slot update: {e}")
 
 # -------------------------
 # Utility: distance
@@ -140,6 +185,40 @@ def _get_nearby_station_tuples(user_lat: float, user_lng: float, radius_km: floa
 
 
 # -------------------------
+# Utility: Calculate real-time available slots
+# -------------------------
+def get_available_slots_now(station):
+    """
+    Calculate available slots RIGHT NOW based on active bookings.
+    Returns the number of slots available at the current moment.
+    """
+    now = timezone.now()
+    # Count bookings that are currently active (overlapping with now)
+    active_count = Booking.objects.filter(
+        station=station,
+        status="active",
+        start_time__lte=now,
+        end_time__gt=now
+    ).count()
+    return max(0, station.total_slots - active_count)
+
+
+def get_available_slots_at_time(station, start_time, end_time):
+    """
+    Calculate available slots for a specific time range.
+    Returns the number of slots available during the requested period.
+    """
+    # Count bookings that overlap with the requested time window
+    overlapping = Booking.objects.filter(
+        station=station,
+        status="active",
+        start_time__lt=end_time,
+        end_time__gt=start_time,
+    ).count()
+    return max(0, station.total_slots - overlapping)
+
+
+# -------------------------
 # Utility: parse iso datetime (returns timezone-aware in settings tz)
 # -------------------------
 def parse_iso_datetime(dt_str):
@@ -204,9 +283,20 @@ def create_booking(request):
 
 
     if pen and pen.blocked_until and pen.blocked_until > timezone.now():
+        # Cap any existing block to max 5 minutes from now
+        max_block = timezone.now() + timedelta(minutes=5)
+        if pen.blocked_until > max_block:
+            pen.blocked_until = max_block
+            try:
+                pen.save(update_fields=["blocked_until"])
+            except Exception:
+                pen.save()
+
+        # Display in local timezone (Asia/Kolkata) to avoid UTC confusion
+        local_block = timezone.localtime(pen.blocked_until)
         return Response(
         {
-            "error": f"You are blocked until {pen.blocked_until.strftime('%Y-%m-%d %H:%M')}"
+            "error": f"You are blocked until {local_block.strftime('%Y-%m-%d %H:%M')}"
         },
         status=403
     )
@@ -255,7 +345,14 @@ def create_booking(request):
 
         Waitlist.objects.create(user=user, station=station, position=next_pos)
 
-        # Notify user
+        # Send waitlist notification email asynchronously
+        threading.Thread(
+            target=send_waitlist_notification_email,
+            args=(user, station, next_pos),
+            daemon=True
+        ).start()
+
+        # Notify user via push
         tokens = DeviceToken.objects.filter(user=user)
         for t in tokens:
             send_push_notification(
@@ -281,11 +378,22 @@ def create_booking(request):
         end_time=end,
         status="active",
     )
-    # decrease available slot
+    # Decrease available slot
     station.available_slots = max(0, station.available_slots - 1)
     station.save()
 
-    # Notify user
+    # Broadcast slot update to all WebSocket clients
+    broadcast_slot_update(station.id)
+
+    # Send booking confirmation email asynchronously (to avoid blocking)
+    email_thread = threading.Thread(
+        target=send_booking_confirmation_email,
+        args=(user, booking, station)
+    )
+    email_thread.daemon = True
+    email_thread.start()
+
+    # Notify user via push
     tokens = DeviceToken.objects.filter(user=user)
     for t in tokens:
         send_push_notification(
@@ -382,12 +490,12 @@ def topsis_custom(request):
     nearby = []
     for st in ChargingStation.objects.all():
         dist = calculate_distance(user_lat, user_lng, st.latitude, st.longitude)
-        if dist <= radius:
+        if dist <= radius and st.available_slots > 0:
             st._distance = dist
             nearby.append(st)
 
     if not nearby:
-        return Response({"error": "No stations near your location"}, status=404)
+        return Response({"error": "No available stations near your location"}, status=404)
 
     matrix, data = [], []
 
@@ -433,12 +541,67 @@ def topsis_custom(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def my_bookings(request):
-    qs = Booking.objects.filter(user=request.user).order_by("-start_time")
+    # Get all bookings, not just active ones, to show booking history
+    print(f"DEBUG my_bookings: User requesting bookings: {request.user.username} (ID: {request.user.id})")
+    qs = Booking.objects.filter(user=request.user).order_by("-created_at")
+    print(f"DEBUG my_bookings: Found {qs.count()} bookings for user {request.user.username}")
+    
     status_filter = request.GET.get("status")
     if status_filter:
         qs = qs.filter(status=status_filter)
 
     return Response(BookingSerializer(qs, many=True).data)
+
+
+# ---------------------------------------------------------
+# 6B. BOOKING DETAIL (single booking info)
+# ---------------------------------------------------------
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def booking_detail(request, booking_id):
+    """Get details of a specific booking"""
+    try:
+        booking = Booking.objects.get(id=booking_id, user=request.user)
+        return Response(BookingSerializer(booking).data)
+    except Booking.DoesNotExist:
+        return Response({"error": "Booking not found"}, status=404)
+
+
+# ---------------------------------------------------------
+# 6A. ACTIVE BOOKINGS (for sidebar)
+# ---------------------------------------------------------
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def active_bookings(request):
+    """Get all active bookings for the current user"""
+    now = timezone.now()
+    # Get bookings that haven't ended yet
+    qs = Booking.objects.filter(
+        user=request.user,
+        status="active",
+        end_time__gt=now
+    ).order_by("start_time").select_related('station')
+    
+    bookings_data = []
+    for booking in qs:
+        # Convert to local timezone before sending to frontend
+        local_start = timezone.localtime(booking.start_time)
+        local_end = timezone.localtime(booking.end_time)
+        
+        bookings_data.append({
+            'id': booking.id,
+            'station_name': booking.station.name,
+            'station_id': booking.station.id,
+            'start_time': local_start.isoformat(),
+            'end_time': local_end.isoformat(),
+            'charger_type': booking.station.charger_type,
+            'power_kw': booking.station.power_kw,
+            'address': booking.station.address,
+            'latitude': booking.station.latitude,
+            'longitude': booking.station.longitude,
+        })
+    
+    return Response({'bookings': bookings_data, 'count': len(bookings_data)})
 
 
 # ---------------------------------------------------------
@@ -473,6 +636,13 @@ def cancel_booking(request):
     station = booking.station
     booking.status = "cancelled"
     booking.save()
+
+    # Increase available slots
+    station.available_slots = min(station.total_slots, station.available_slots + 1)
+    station.save()
+
+    # Broadcast slot update to all WebSocket clients
+    broadcast_slot_update(station.id)
 
     # notify user
     tokens = DeviceToken.objects.filter(user=request.user)
@@ -672,12 +842,66 @@ def best_charge_stops(request):
 
 @api_view(["GET"])
 def station_search(request):
+    from .topsis import topsis
+    
     q = request.GET.get("q", "").strip()
     if not q:
-        return Response([])
-
-    stations = ChargingStation.objects.filter(name__icontains=q)[:20]
-    result = [{"id": st.id, "name": st.name, "lat": st.latitude, "lng": st.longitude} for st in stations]
+        # Return ALL stations if no search query
+        stations = ChargingStation.objects.all()
+    else:
+        stations = ChargingStation.objects.filter(
+            models.Q(name__icontains=q) | 
+            models.Q(address__icontains=q)
+        )
+    
+    # Prepare data for TOPSIS scoring
+    station_list = list(stations)
+    if len(station_list) > 0:
+        # TOPSIS criteria: [power_kw, availability_percentage, speed, -price_per_kwh, -waiting_time]
+        # Positive impacts: power, availability, speed
+        # Negative impacts: price, waiting time
+        matrix = []
+        for st in station_list:
+            availability_pct = (st.available_slots / st.total_slots * 100) if st.total_slots > 0 else 0
+            matrix.append([
+                st.power_kw,  # Higher is better
+                availability_pct,  # Higher is better
+                st.speed,  # Higher is better
+                st.price_per_kwh,  # Lower is better (will use negative impact)
+                st.waiting_time,  # Lower is better (will use negative impact)
+            ])
+        
+        weights = [0.25, 0.25, 0.15, 0.2, 0.15]  # Weights for each criterion
+        impacts = ['+', '+', '+', '-', '-']  # + for benefit, - for cost
+        
+        try:
+            topsis_scores = topsis(matrix, weights, impacts)
+        except:
+            topsis_scores = [0.5] * len(station_list)
+    else:
+        topsis_scores = []
+    
+    result = []
+    for idx, st in enumerate(station_list):
+        availability_pct = (st.available_slots / st.total_slots * 100) if st.total_slots > 0 else 0
+        result.append({
+            "id": st.id,
+            "name": st.name,
+            "address": st.address,
+            "latitude": st.latitude,
+            "longitude": st.longitude,
+            "charger_type": st.charger_type,
+            "connector_type": st.connector_type,
+            "power_kw": st.power_kw,
+            "total_slots": st.total_slots,
+            "available_slots": st.available_slots,
+            "availability_percentage": round(availability_pct, 1),
+            "price_per_kwh": st.price_per_kwh,
+            "waiting_time": st.waiting_time,
+            "speed": st.speed,
+            "status": st.status,
+            "topsis_score": round(topsis_scores[idx], 3) if idx < len(topsis_scores) else 0.5,
+        })
     return Response(result)
 
 
@@ -955,3 +1179,449 @@ def station_full_info(request):
         result.sort(key=lambda x: x["price_per_kwh"])
 
     return Response(result)
+
+
+# =====================================================
+# STATION DETAIL VIEW
+# =====================================================
+@api_view(['GET'])
+def station_detail(request, station_id):
+    """
+    Get detailed information about a specific station including
+    images, facilities, ratings, contact information, etc.
+    """
+    try:
+        station = ChargingStation.objects.get(id=station_id)
+    except ChargingStation.DoesNotExist:
+        return Response({"error": "Station not found"}, status=404)
+    
+    # Serialize with all fields
+    serializer = ChargingStationSerializer(station)
+    data = serializer.data
+    
+    # Add user's distance if lat/lng provided
+    user_lat = request.GET.get("user_lat")
+    user_lng = request.GET.get("user_lng")
+    if user_lat and user_lng:
+        try:
+            user_lat = float(user_lat)
+            user_lng = float(user_lng)
+            dist = calculate_distance(user_lat, user_lng, station.latitude, station.longitude)
+            data['distance_km'] = round(dist, 2)
+        except (TypeError, ValueError):
+            pass
+    
+    # Add ratings count
+    ratings_data = StationRating.objects.filter(station=station).aggregate(
+        count=models.Count('id'),
+        avg=Avg('rating')
+    )
+    data['ratings_count'] = ratings_data['count'] or 0
+    
+    # Add recent reviews (last 5)
+    recent_ratings = StationRating.objects.filter(station=station).order_by('-created_at')[:5]
+    data['recent_reviews'] = [
+        {
+            'rating': r.rating,
+            'review': 'Great station!',  # Default review text
+            'user': r.user.username,
+            'created_at': timezone.localtime(r.created_at).strftime('%Y-%m-%d %H:%M')
+        }
+        for r in recent_ratings
+    ]
+    
+    return Response(data)
+
+
+# ---------------------------------------------------------
+# RECENTLY VIEWED STATIONS
+# ---------------------------------------------------------
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def track_station_view(request):
+    """Track when a user views a station detail page"""
+    from .models import RecentlyViewedStation
+    
+    station_id = request.data.get("station_id")
+    if not station_id:
+        return Response({"error": "station_id required"}, status=400)
+    
+    try:
+        station = ChargingStation.objects.get(id=station_id)
+    except ChargingStation.DoesNotExist:
+        return Response({"error": "Station not found"}, status=404)
+    
+    # Update or create recent view
+    RecentlyViewedStation.objects.update_or_create(
+        user=request.user,
+        station=station,
+        defaults={"viewed_at": timezone.now()}
+    )
+    
+    # Keep only last 10 viewed stations per user
+    user_views = RecentlyViewedStation.objects.filter(user=request.user).order_by('-viewed_at')
+    if user_views.count() > 10:
+        to_delete = user_views[10:]
+        RecentlyViewedStation.objects.filter(id__in=[v.id for v in to_delete]).delete()
+    
+    return Response({"message": "Station view tracked"})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def recently_viewed_stations(request):
+    """Get user's recently viewed stations"""
+    from .models import RecentlyViewedStation
+    
+    recent_views = RecentlyViewedStation.objects.filter(
+        user=request.user
+    ).select_related('station').order_by('-viewed_at')[:10]
+    
+    stations_data = []
+    for view in recent_views:
+        station = view.station
+        stations_data.append({
+            'id': station.id,
+            'name': station.name,
+            'address': station.address,
+            'charger_type': station.charger_type,
+            'power_kw': station.power_kw,
+            'price_per_kwh': station.price_per_kwh,
+            'available_slots': station.available_slots,
+            'total_slots': station.total_slots,
+            'latitude': station.latitude,
+            'longitude': station.longitude,
+            'viewed_at': timezone.localtime(view.viewed_at).isoformat(),
+        })
+    
+    return Response({"recently_viewed": stations_data})
+
+
+# ---------------------------------------------------------
+# ADMIN DASHBOARD VIEWS
+# ---------------------------------------------------------
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def admin_dashboard_stats(request):
+    """Get admin dashboard statistics"""
+    from django.contrib.auth.models import User
+    from django.db.models import Sum, Avg, Count, Q
+    from django.db.models.functions import TruncDate
+    
+    # Check if user is admin/staff
+    if not request.user.is_staff:
+        return Response({"error": "Admin access required"}, status=403)
+    
+    now = timezone.now()
+    thirty_days_ago = now - timedelta(days=30)
+    seven_days_ago = now - timedelta(days=7)
+    
+    # Overall Statistics
+    total_users = User.objects.count()
+    total_stations = ChargingStation.objects.count()
+    total_bookings = Booking.objects.count()
+    active_bookings = Booking.objects.filter(status="active").count()
+    
+    # Revenue calculations (estimated)
+    completed_bookings = Booking.objects.filter(status="completed")
+    estimated_revenue = 0
+    for booking in completed_bookings:
+        duration_hours = (booking.end_time - booking.start_time).total_seconds() / 3600
+        energy_kwh = duration_hours * 30
+        cost = energy_kwh * booking.station.price_per_kwh
+        estimated_revenue += cost
+    
+    # Recent activity (last 30 days)
+    new_users_30d = User.objects.filter(date_joined__gte=thirty_days_ago).count()
+    bookings_30d = Booking.objects.filter(created_at__gte=thirty_days_ago).count()
+    bookings_7d = Booking.objects.filter(created_at__gte=seven_days_ago).count()
+    
+    # Station utilization
+    total_capacity = ChargingStation.objects.aggregate(Sum('total_slots'))['total_slots__sum'] or 0
+    total_available = ChargingStation.objects.aggregate(Sum('available_slots'))['available_slots__sum'] or 0
+    utilization_rate = ((total_capacity - total_available) / total_capacity * 100) if total_capacity > 0 else 0
+    
+    # Top stations by bookings
+    top_stations = Booking.objects.values(
+        'station__name', 'station__id'
+    ).annotate(
+        booking_count=Count('id')
+    ).order_by('-booking_count')[:5]
+    
+    # Daily bookings for last 7 days
+    daily_bookings = Booking.objects.filter(
+        created_at__gte=seven_days_ago
+    ).annotate(
+        date=TruncDate('created_at')
+    ).values('date').annotate(
+        count=Count('id')
+    ).order_by('date')
+    
+    # User activity
+    active_users_7d = Booking.objects.filter(
+        created_at__gte=seven_days_ago
+    ).values('user').distinct().count()
+    
+    return Response({
+        'overview': {
+            'total_users': total_users,
+            'total_stations': total_stations,
+            'total_bookings': total_bookings,
+            'active_bookings': active_bookings,
+            'estimated_revenue': round(estimated_revenue, 2),
+            'utilization_rate': round(utilization_rate, 2),
+        },
+        'recent_activity': {
+            'new_users_30d': new_users_30d,
+            'bookings_30d': bookings_30d,
+            'bookings_7d': bookings_7d,
+            'active_users_7d': active_users_7d,
+        },
+        'top_stations': list(top_stations),
+        'daily_bookings': list(daily_bookings),
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def admin_revenue_analytics(request):
+    """Detailed revenue analytics for admin"""
+    if not request.user.is_staff:
+        return Response({"error": "Admin access required"}, status=403)
+    
+    from django.db.models.functions import TruncDate, TruncMonth
+    
+    days = int(request.GET.get('days', 30))
+    start_date = timezone.now() - timedelta(days=days)
+    
+    bookings = Booking.objects.filter(
+        created_at__gte=start_date,
+        status__in=['completed', 'active']
+    ).select_related('station')
+    
+    daily_revenue = {}
+    monthly_revenue = {}
+    station_revenue = {}
+    
+    for booking in bookings:
+        duration_hours = (booking.end_time - booking.start_time).total_seconds() / 3600
+        energy_kwh = duration_hours * 30
+        revenue = energy_kwh * booking.station.price_per_kwh
+        
+        date_key = booking.created_at.date().isoformat()
+        daily_revenue[date_key] = daily_revenue.get(date_key, 0) + revenue
+        
+        month_key = booking.created_at.strftime('%Y-%m')
+        monthly_revenue[month_key] = monthly_revenue.get(month_key, 0) + revenue
+        
+        station_key = booking.station.name
+        if station_key not in station_revenue:
+            station_revenue[station_key] = {
+                'station_id': booking.station.id,
+                'revenue': 0,
+                'booking_count': 0
+            }
+        station_revenue[station_key]['revenue'] += revenue
+        station_revenue[station_key]['booking_count'] += 1
+    
+    top_revenue_stations = sorted(
+        station_revenue.items(),
+        key=lambda x: x[1]['revenue'],
+        reverse=True
+    )[:10]
+    
+    total_revenue = sum(daily_revenue.values())
+    avg_daily_revenue = total_revenue / days if days > 0 else 0
+    
+    return Response({
+        'summary': {
+            'total_revenue': round(total_revenue, 2),
+            'avg_daily_revenue': round(avg_daily_revenue, 2),
+            'total_bookings': bookings.count(),
+        },
+        'daily_revenue': [
+            {'date': k, 'revenue': round(v, 2)} 
+            for k, v in sorted(daily_revenue.items())
+        ],
+        'monthly_revenue': [
+            {'month': k, 'revenue': round(v, 2)} 
+            for k, v in sorted(monthly_revenue.items())
+        ],
+        'top_stations': [
+            {
+                'name': k,
+                'station_id': v['station_id'],
+                'revenue': round(v['revenue'], 2),
+                'bookings': v['booking_count']
+            }
+            for k, v in top_revenue_stations
+        ],
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def admin_user_management(request):
+    """User management data for admin"""
+    if not request.user.is_staff:
+        return Response({"error": "Admin access required"}, status=403)
+    
+    from django.contrib.auth.models import User
+    from django.db.models import Count, Sum
+    
+    page = int(request.GET.get('page', 1))
+    per_page = int(request.GET.get('per_page', 20))
+    search = request.GET.get('search', '')
+    
+    users = User.objects.all()
+    if search:
+        users = users.filter(
+            Q(username__icontains=search) | 
+            Q(email__icontains=search)
+        )
+    
+    users = users.annotate(
+        total_bookings=Count('booking'),
+        active_bookings=Count('booking', filter=Q(booking__status='active'))
+    ).order_by('-date_joined')
+    
+    total_users = users.count()
+    start = (page - 1) * per_page
+    end = start + per_page
+    users_page = users[start:end]
+    
+    users_data = []
+    for user in users_page:
+        try:
+            user_car = UserCar.objects.get(user=user)
+            car_info = user_car.car.name if user_car.car else "No car selected"
+        except UserCar.DoesNotExist:
+            car_info = "No car selected"
+        
+        try:
+            penalty = UserPenalty.objects.get(user=user)
+            penalty_points = penalty.penalty_points
+        except UserPenalty.DoesNotExist:
+            penalty_points = 0
+        
+        users_data.append({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'date_joined': user.date_joined.isoformat(),
+            'is_active': user.is_active,
+            'is_staff': user.is_staff,
+            'total_bookings': user.total_bookings,
+            'active_bookings': user.active_bookings,
+            'car': car_info,
+            'penalty_points': penalty_points,
+        })
+    
+    return Response({
+        'users': users_data,
+        'pagination': {
+            'page': page,
+            'per_page': per_page,
+            'total': total_users,
+            'pages': (total_users + per_page - 1) // per_page,
+        }
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def admin_booking_analytics(request):
+    """Booking analytics for admin"""
+    if not request.user.is_staff:
+        return Response({"error": "Admin access required"}, status=403)
+    
+    from django.db.models.functions import TruncDate, TruncHour
+    
+    days = int(request.GET.get('days', 30))
+    start_date = timezone.now() - timedelta(days=days)
+    
+    status_distribution = Booking.objects.filter(
+        created_at__gte=start_date
+    ).values('status').annotate(count=Count('id'))
+    
+    bookings_with_duration = Booking.objects.filter(
+        created_at__gte=start_date
+    ).exclude(start_time=None).exclude(end_time=None)
+    
+    durations = []
+    for booking in bookings_with_duration:
+        duration = (booking.end_time - booking.start_time).total_seconds() / 3600
+        durations.append(duration)
+    
+    avg_duration = sum(durations) / len(durations) if durations else 0
+    
+    total_bookings = Booking.objects.filter(created_at__gte=start_date).count()
+    cancelled_bookings = Booking.objects.filter(
+        created_at__gte=start_date,
+        status='cancelled'
+    ).count()
+    cancellation_rate = (cancelled_bookings / total_bookings * 100) if total_bookings > 0 else 0
+    
+    # Peak usage times - calculate in Python for SQLite compatibility
+    hour_counts = {}
+    for booking in Booking.objects.filter(created_at__gte=start_date).exclude(start_time=None):
+        hour = booking.start_time.hour
+        hour_counts[hour] = hour_counts.get(hour, 0) + 1
+    
+    # Get top 5 peak hours
+    sorted_hours = sorted(hour_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    peak_hours = [{'hour': h, 'count': c} for h, c in sorted_hours]
+    
+    return Response({
+        'summary': {
+            'total_bookings': total_bookings,
+            'cancelled_bookings': cancelled_bookings,
+            'cancellation_rate': round(cancellation_rate, 2),
+            'avg_duration_hours': round(avg_duration, 2),
+        },
+        'status_distribution': list(status_distribution),
+        'peak_hours': peak_hours,
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def admin_station_management(request):
+    """Station management data for admin"""
+    if not request.user.is_staff:
+        return Response({"error": "Admin access required"}, status=403)
+    
+    from django.db.models import Count, Avg
+    
+    stations = ChargingStation.objects.annotate(
+        total_bookings=Count('booking'),
+        active_bookings=Count('booking', filter=Q(booking__status='active')),
+        avg_rating=Avg('ratings__rating')
+    ).order_by('-total_bookings')
+    
+    stations_data = []
+    for station in stations:
+        utilization = ((station.total_slots - station.available_slots) / station.total_slots * 100) if station.total_slots > 0 else 0
+        
+        stations_data.append({
+            'id': station.id,
+            'name': station.name,
+            'address': station.address,
+            'charger_type': station.charger_type,
+            'power_kw': station.power_kw,
+            'price_per_kwh': station.price_per_kwh,
+            'total_slots': station.total_slots,
+            'available_slots': station.available_slots,
+            'utilization_rate': round(utilization, 2),
+            'status': station.status,
+            'total_bookings': station.total_bookings,
+            'active_bookings': station.active_bookings,
+            'avg_rating': round(station.avg_rating, 2) if station.avg_rating else 0,
+            'verified': station.verified,
+            'last_updated': station.last_updated.isoformat(),
+        })
+    
+    return Response({
+        'stations': stations_data,
+        'total_count': len(stations_data),
+    })

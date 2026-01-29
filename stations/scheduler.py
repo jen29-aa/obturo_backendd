@@ -18,11 +18,9 @@ def add_penalty(user, points):
     pen.penalty_points += points
     pen.no_show_count += 1
 
-    # Auto-block rules
-    if pen.penalty_points >= 5:
-        pen.blocked_until = timezone.now() + timedelta(days=7)
-    elif pen.penalty_points >= 3:
-        pen.blocked_until = timezone.now() + timedelta(hours=24)
+    # Auto-block rules (short windows only)
+    if pen.penalty_points >= 3:
+        pen.blocked_until = timezone.now() + timedelta(minutes=5)
 
     pen.save()
     print(f"[Penalty] Penalty applied → {user.username} | Total = {pen.penalty_points}")

@@ -1,0 +1,24 @@
+<!-- Shared Navigation Component -->
+<nav style="background: rgba(15, 20, 35, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(16, 185, 129, 0.1); position: sticky; top: 0; z-index: 1000; padding: 16px 0;">
+  <div style="max-width: 1400px; margin: 0 auto; padding: 0 32px; display: flex; justify-content: space-between; align-items: center;">
+    <!-- Logo -->
+    <div style="font-size: 26px; font-weight: 700; background: linear-gradient(135deg, #10b981 0%, #059669 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;">
+      Obturo
+    </div>
+    
+    <!-- Navigation Links -->
+    <div style="display: flex; gap: 30px; align-items: center;">
+      <a href="{% url 'home' %}" style="text-decoration: none; color: #b0b0b0; font-weight: 500; transition: color 0.3s ease;">Home</a>
+      <a href="{% url 'stations' %}" style="text-decoration: none; color: #b0b0b0; font-weight: 500; transition: color 0.3s ease;">Explore</a>
+      <a href="{% url 'bookings' %}" style="text-decoration: none; color: #b0b0b0; font-weight: 500; transition: color 0.3s ease;">My Bookings</a>
+      <a href="{% url 'ranking' %}" style="text-decoration: none; color: #b0b0b0; font-weight: 500; transition: color 0.3s ease;">Ranking</a>
+      <a href="{% url 'profile' %}" style="text-decoration: none; color: #b0b0b0; font-weight: 500; transition: color 0.3s ease;">Profile</a>
+      
+      <!-- User Welcome & Logout -->
+      <div style="display: flex; gap: 15px; align-items: center; margin-left: 20px; border-left: 1px solid rgba(16, 185, 129, 0.2); padding-left: 20px;">
+        <span style="font-size: 14px; color: #b0b0b0;">Welcome, <strong style="color: #10b981;">{{ username }}</strong></span>
+        <a href="{% url 'logout' %}" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; text-decoration: none; transition: all 0.3s ease;">Logout</a>
+      </div>
+    </div>
+  </div>
+</nav>

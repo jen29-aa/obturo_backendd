@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Obturo - Smart Station Ranking</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #fafbfc;
+      color: #2c3e50;
+    }
+    /* Leaflet map styles */
+    .map-container {
+      width: 100%;
+      height: 420px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      border: 1px solid #e8eaed;
+    }
+    
+    /* Header */
+    .header {
+      background: #ffffff;
+      color: #2c3e50;
+      padding: 16px 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      border-bottom: 1px solid #e8eaed;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .title-section {
+      margin-bottom: 40px;
+    }
+    
+    .title-section h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+    }
+    
+    .title-section p {
+      font-size: 16px;
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .main-content {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    
+    /* Weights Panel */
+    .weights-panel {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+    
+    .weights-panel h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+
+    .preset-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .preset-btn {
+      padding: 10px 12px;
+      background: #f8f9fa;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .preset-btn:hover {
+      background: #e8f5e9;
+      border-color: #10b981;
+    }
+
+    .preset-btn.active {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border-color: #10b981;
+    }
+
+    .helper-text {
+      font-size: 13px;
+      color: #666;
+      padding: 12px;
+      background: #f0f9ff;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 3px solid #1e88e5;
+      line-height: 1.5;
+    }
+    
+    .weight-item {
+      margin-bottom: 20px;
+      padding: 14px;
+      background: #fafafa;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .weight-item.high-priority {
+      background: #e8f5e9;
+      border-color: #10b981;
+    }
+    
+    .weight-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+      align-items: center;
+    }
+    
+    .weight-label-text {
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .priority-indicator {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .priority-high {
+      background: #10b981;
+      color: white;
+    }
+
+    .priority-medium {
+      background: #fbbf24;
+      color: white;
+    }
+
+    .priority-low {
+      background: #e5e7eb;
+      color: #6b7280;
+    }
+    
+    .weight-value {
+      font-weight: 700;
+      color: #10b981;
+      min-width: 60px;
+      text-align: right;
+      font-size: 15px;
+    }
+    
+    .weight-slider {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(to right, #e5e7eb 0%, #10b981 100%);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    
+    .weight-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+      transition: all 0.2s;
+    }
+
+    .weight-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 3px 8px rgba(16, 185, 129, 0.5);
+    }
+    
+    .weight-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      border: none;
+      border: none;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    }
+    
+    .weight-description {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 6px;
+      line-height: 1.5;
+      font-style: italic;
+    }
+    
+    .auto-normalize-notice {
+      padding: 12px;
+      background: #ecfdf5;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: #059669;
+      font-weight: 500;
+      border: 1px dashed #10b981;
+    }
+    
+    .location-section {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    .location-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+    .location-input {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .location-input input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    
+    .location-btn {
+      padding: 8px 16px;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    
+    .location-btn:hover {
+      background: #059669;
+    }
+    
+    .location-display {
+      padding: 8px;
+      background: white;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    .btn-primary, .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    
+    .btn-primary {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #059669;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .btn-book {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+    
+    .btn-book:hover {
+      background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+    
+    /* Results */
+    .results-section {
+      display: none;
+    }
+    
+    .results-section.active {
+      display: block;
+    }
+    
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .results-title {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .results-info {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    /* Ranking Cards */
+    .ranking-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .ranking-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.2s;
+      border-left: 4px solid #10b981;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+    
+    .ranking-card:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+    
+    .ranking-card.rank-1 {
+      border-left-color: #ffc107;
+      background: linear-gradient(90deg, rgba(255, 193, 7, 0.05) 0%, transparent 100%);
+    }
+    
+    .ranking-card.rank-2 {
+      border-left-color: #c0c0c0;
+      background: linear-gradient(90deg, rgba(192, 192, 192, 0.05) 0%, transparent 100%);
+    }
+    
+    .ranking-card.rank-3 {
+      border-left-color: #cd7f32;
+      background: linear-gradient(90deg, rgba(205, 127, 50, 0.05) 0%, transparent 100%);
+    }
+    
+    .rank-badge {
+      font-size: 32px;
+      font-weight: 700;
+      color: #999;
+      text-align: center;
+      min-width: 50px;
+    }
+    
+    .rank-1 .rank-badge {
+      color: #ffc107;
+      font-size: 36px;
+    }
+    
+    .rank-2 .rank-badge {
+      color: #c0c0c0;
+      font-size: 32px;
+    }
+    
+    .rank-3 .rank-badge {
+      color: #cd7f32;
+      font-size: 32px;
+    }
+    
+    .station-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .station-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    
+    .station-detail {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .stat-box {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #10b981;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+    
+    .score-badge {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 700;
+    }
+    
+    .score-number {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+    
+    .score-label {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #10b981;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #c3e6cb;
+    }
+    
+    @media (max-width: 1024px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .weights-panel {
+        position: static;
+      }
+      
+      .ranking-card {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+  </style>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <div style="display: flex; gap: 20px; align-items: center; flex: 1;">
+        <a href="{% url 'home' %}" style="text-decoration: none; color: inherit;">
+          <div class="logo">Obturo</div>
+        </a>
+        <!-- Navigation Links -->
+        <div style="display: flex; gap: 25px; margin-left: 40px;">
+          <a href="{% url 'home' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Home</a>
+          <a href="{% url 'stations' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Explore</a>
+          <a href="{% url 'bookings' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Bookings</a>
+          <a href="{% url 'ranking' %}" style="color: #2c3e50; text-decoration: none; font-weight: 600; opacity: 1; border-bottom: 2px solid #1e88e5;">Ranking</a>
+          <a href="{% url 'profile' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Profile</a>
+        </div>
+      </div>
+      <a href="{% url 'logout' %}" style="background: #f5f5f5; color: #2c3e50; border: 1px solid #ddd; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">Logout</a>
+    </div>
+  </div>
+  
+  <div class="container">
+    <!-- Title Section -->
+    <div class="title-section">
+      <h1>Smart Station Ranking</h1>
+      <p>Use quick presets or customize priorities to find the perfect charging station for your needs. We'll handle the math!</p>
+    </div>
+    
+    <div class="main-content">
+      <!-- Left Panel: Weights -->
+      <div class="weights-panel">
+        <h2>Ranking Preferences</h2>
+        
+        <div class="helper-text">
+          <strong>Quick Tip:</strong> Choose a preset or adjust sliders to set your priorities. We automatically balance the weights!
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="preset-buttons">
+          <button class="preset-btn" onclick="applyPreset('fastest')">
+            Fastest
+          </button>
+          <button class="preset-btn" onclick="applyPreset('cheapest')">
+            Cheapest
+          </button>
+          <button class="preset-btn active" onclick="applyPreset('balanced')">
+            Balanced
+          </button>
+          <button class="preset-btn" onclick="applyPreset('convenient')">
+            Nearby
+          </button>
+        </div>
+        
+        <!-- Location Section -->
+        <div class="location-section">
+          <div class="location-label">Your Location</div>
+          <div class="location-input">
+            <button class="location-btn" onclick="getMyLocation()" style="background: #1e88e5; color: white; padding: 10px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%;">Get Location</button>
+          </div>
+          {% if has_location %}
+            <div class="location-display" style="background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #4caf50;">
+              <div id="latDisplay" style="font-size: 13px; color: #2e7d32;">Lat: {{ current_filters.lat|floatformat:4 }}</div>
+              <div id="lonDisplay" style="font-size: 13px; color: #2e7d32;">Lon: {{ current_filters.lon|floatformat:4 }}</div>
+              <div id="radiusDisplay" style="font-size: 13px; color: #2e7d32;">Radius: {{ current_filters.radius }} km</div>
+              <button onclick="clearLocation()" style="margin-top: 8px; background: #f5f5f5; color: #2c3e50; border: 1px solid #ddd; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; width: 100%;">Clear Location</button>
+            </div>
+          {% else %}
+            <div class="location-display" style="background: #fff3e0; padding: 12px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #ff9800; font-size: 13px; color: #e65100;">
+              Click "Get Location" to enable location-based filtering
+            </div>
+          {% endif %}
+          <input type="hidden" id="userLat" value="{{ current_filters.lat }}">
+          <input type="hidden" id="userLon" value="{{ current_filters.lon }}">
+        </div>
+
+        <!-- Route Inputs -->
+        <div style="margin-top:12px; padding:12px; background:#ffffff; border-radius:8px;">
+          <div class="location-label">Route (Source → Destination)</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+            <input id="srcInput" placeholder="Enter source address or place" style="padding:8px; border:1px solid #ddd; border-radius:6px;">
+            <input id="dstInput" placeholder="Enter destination address or place" style="padding:8px; border:1px solid #ddd; border-radius:6px;">
+            <div style="display:flex; gap:8px;">
+              <button class="location-btn" onclick="showRouteAndStations()">Show Route</button>
+              <button class="btn-secondary" onclick="clearRoute()">Clear</button>
+            </div>
+            <div style="font-size:12px; color:#666; margin-top:6px;">Only stations with available slots will be shown along the route.</div>
+          </div>
+        </div>
+        
+        <!-- Weight Sliders -->
+        <div style="margin-top: 24px;">
+          <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #374151;">Customize Priorities</h3>
+          
+          <div class="weight-item" id="priceItem">
+            <div class="weight-label">
+              <span class="weight-label-text">
+                Price
+                <span class="priority-indicator priority-low" id="pricePriority">Low</span>
+              </span>
+              <span class="weight-value"><span id="priceWeight">20</span>%</span>
+            </div>
+            <input type="range" id="priceSlider" class="weight-slider" min="0" max="100" value="20" oninput="updateWeights()">
+            <div class="weight-description">Prefer lower cost per kWh</div>
+          </div>
+          
+          <div class="weight-item" id="powerItem">
+            <div class="weight-label">
+              <span class="weight-label-text">
+                Power
+                <span class="priority-indicator priority-medium" id="powerPriority">Medium</span>
+              </span>
+              <span class="weight-value"><span id="powerWeight">25</span>%</span>
+            </div>
+            <input type="range" id="powerSlider" class="weight-slider" min="0" max="100" value="25" oninput="updateWeights()">
+            <div class="weight-description">Higher power = faster charging</div>
+          </div>
+          
+          <div class="weight-item" id="availabilityItem">
+            <div class="weight-label">
+              <span class="weight-label-text">
+                Availability
+                <span class="priority-indicator priority-medium" id="availabilityPriority">Medium</span>
+              </span>
+              <span class="weight-value"><span id="availabilityWeight">25</span>%</span>
+            </div>
+            <input type="range" id="availabilitySlider" class="weight-slider" min="0" max="100" value="25" oninput="updateWeights()">
+            <div class="weight-description">More open charging spots</div>
+          </div>
+          
+          <div class="weight-item" id="speedItem">
+            <div class="weight-label">
+              <span class="weight-label-text">
+                Speed
+                <span class="priority-indicator priority-low" id="speedPriority">Low</span>
+              </span>
+              <span class="weight-value"><span id="speedWeight">15</span>%</span>
+            </div>
+            <input type="range" id="speedSlider" class="weight-slider" min="0" max="100" value="15" oninput="updateWeights()">
+            <div class="weight-description">Station speed rating</div>
+          </div>
+          
+          <div class="weight-item" id="waitItem">
+            <div class="weight-label">
+              <span class="weight-label-text">
+                Wait Time
+                <span class="priority-indicator priority-low" id="waitPriority">Low</span>
+              </span>
+              <span class="weight-value"><span id="waitWeight">15</span>%</span>
+            </div>
+            <input type="range" id="waitSlider" class="weight-slider" min="0" max="100" value="15" oninput="updateWeights()">
+            <div class="weight-description">Shorter waiting time</div>
+          </div>
+          
+          <div class="weight-item" id="distanceItem">
+            <div class="weight-label">
+              <span class="weight-label-text">
+                Distance
+                <span class="priority-indicator priority-low" id="distancePriority">None</span>
+              </span>
+              <span class="weight-value"><span id="distanceWeight">0</span>%</span>
+            </div>
+            <input type="range" id="distanceSlider" class="weight-slider" min="0" max="100" value="0" oninput="updateWeights()">
+            <div class="weight-description">Closer proximity to you</div>
+          </div>
+        </div>
+        
+        <!-- Auto-normalize notice -->
+        <div class="auto-normalize-notice">
+          Weights are automatically balanced
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="btn-group">
+          <button type="button" class="btn-secondary" onclick="resetWeights()">Reset</button>
+          <button type="button" class="btn-primary" onclick="rankStations()">Rank Stations</button>
+        </div>
+      </div>
+      
+      <!-- Right Panel: Map + Results -->
+      <div>
+        <div class="map-container" id="map"></div>
+        <!-- small legend -->
+        <div style="display:flex; gap:12px; align-items:center; margin:8px 0 18px;">
+          <div style="display:flex; gap:6px; align-items:center; font-size:13px; color:#666;">
+            <div style="width:12px; height:12px; background:#2e7d32; border-radius:3px;"></div> Available slot
+          </div>
+          <div style="display:flex; gap:6px; align-items:center; font-size:13px; color:#666;">
+            <div style="width:12px; height:12px; background:#10b981; border-radius:3px;"></div> Route
+          </div>
+        </div>
+
+      <!-- Right Panel: Results -->
+      <div class="results-section" id="resultsSection">
+        <div id="errorMessage"></div>
+        <div id="loadingSpinner" class="loading" style="display:none;">
+          <div class="spinner"></div>
+          <p>Analyzing stations with your weights...</p>
+        </div>
+        
+        <div id="rankingContainer" style="display:none;">
+          <div class="results-header">
+            <div>
+              <div class="results-title">Top Ranked Stations</div>
+              <div class="results-info" id="resultsInfo"></div>
+            </div>
+          </div>
+          
+          <div class="ranking-list" id="rankingList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    console.log('Script loaded - initializing ranking page');
+    
+    const OBTURO_LOCATION_KEY = 'obturo.location.v1';
+    let userLocationMarker = null;
+    let obturoLocationLocked = false;
+    let obturoIpAbortController = null;
+
+    // Set auth token from template
+    const AUTH_TOKEN = '{{ auth_token }}';
+    if (!AUTH_TOKEN || AUTH_TOKEN === 'None' || AUTH_TOKEN === '') {
+      console.error('ERROR: No auth token available!');
+      window.location.href = '/login/';
+    }
+
+    function saveUserLocation(lat, lon, source) {
+      try {
+        const payload = {
+          lat: Number(lat),
+          lon: Number(lon),
+          source: source || 'unknown',
+          ts: Date.now()
+        };
+        localStorage.setItem(OBTURO_LOCATION_KEY, JSON.stringify(payload));
+      } catch (e) {
+        console.warn('Unable to save location:', e);
+      }
+    }
+
+    function loadUserLocation() {
+      try {
+        const raw = localStorage.getItem(OBTURO_LOCATION_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (typeof data?.lat !== 'number' || typeof data?.lon !== 'number') return null;
+        return data;
+      } catch {
+        return null;
+      }
+    }
+
+    function getUrlLocation() {
+      const url = new URL(window.location);
+      const lat = url.searchParams.get('lat');
+      const lon = url.searchParams.get('lon');
+      if (!lat || !lon) return null;
+      const latNum = Number(lat);
+      const lonNum = Number(lon);
+      if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return null;
+      return { lat: latNum, lon: lonNum };
+    }
+
+    function applyLocationToUI(lat, lon) {
+      const latInput = document.getElementById('userLat');
+      const lonInput = document.getElementById('userLon');
+      const latDisplay = document.getElementById('latDisplay');
+      const lonDisplay = document.getElementById('lonDisplay');
+
+      if (latInput && lonInput) {
+        latInput.value = lat;
+        lonInput.value = lon;
+      }
+      if (latDisplay && lonDisplay) {
+        latDisplay.textContent = `Lat: ${Number(lat).toFixed(4)}`;
+        lonDisplay.textContent = `Lon: ${Number(lon).toFixed(4)}`;
+      }
+      showUserLocationOnMap(lat, lon);
+    }
+
+    // Initialize location: prefer URL params, else saved choice, else default.
+    window.addEventListener('DOMContentLoaded', function() {
+      console.log('DOMContentLoaded event fired');
+      try {
+        const url = new URL(window.location);
+        const urlLoc = getUrlLocation();
+        if (urlLoc) {
+          saveUserLocation(urlLoc.lat, urlLoc.lon, 'url');
+          applyLocationToUI(urlLoc.lat, urlLoc.lon);
+          console.log('Using URL location:', urlLoc.lat, urlLoc.lon);
+          return;
+        }
+
+        const saved = loadUserLocation();
+        if (saved && !url.searchParams.has('autoloc')) {
+          url.searchParams.set('lat', saved.lat);
+          url.searchParams.set('lon', saved.lon);
+          url.searchParams.set('radius', url.searchParams.get('radius') || '15');
+          url.searchParams.set('autoloc', '1');
+          console.log('Applying saved location across pages:', saved.lat, saved.lon, 'source:', saved.source);
+          window.location = url;
+          return;
+        }
+
+        // Default location (Kochi)
+        saveUserLocation(9.9488215, 76.6253752, 'default');
+        applyLocationToUI(9.9488215, 76.6253752);
+        console.log('Default location set successfully');
+      } catch (e) {
+        console.error('Error setting default location:', e);
+      }
+    });
+    
+    function showUserLocationOnMap(lat, lon) {
+      if (!map) return;
+      
+      // Remove old marker if exists
+      if (userLocationMarker) {
+        userLocationMarker.remove();
+      }
+      
+      // Add new user location marker
+      userLocationMarker = L.marker([lat, lon], {
+        icon: L.divIcon({
+          className: 'user-location-marker',
+          html: '<div style="background:#2196F3;width:40px;height:40px;border-radius:50%;border:4px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;"></div>',
+          iconSize: [40, 40]
+        })
+      }).bindPopup('Your Location').addTo(map);
+      
+      // Center map on user location
+      map.setView([lat, lon], 12);
+    }
+    
+    function getMyLocation() {
+      const btn = document.querySelector('.location-btn');
+      btn.disabled = true;
+      btn.textContent = '📡 Getting GPS fix...';
+      console.log('🔍 Starting high-accuracy GPS (watchPosition)...');
+
+      obturoLocationLocked = false;
+      if (obturoIpAbortController) {
+        try { obturoIpAbortController.abort(); } catch {}
+        obturoIpAbortController = null;
+      }
+
+      getBestGpsFix({ maxWaitMs: 20000, desiredAccuracyM: 80 })
+        .then((best) => {
+          if (obturoLocationLocked) return;
+          const msg = `Best GPS fix:\nLat: ${best.lat.toFixed(5)}\nLon: ${best.lon.toFixed(5)}\nAccuracy: ${best.accuracyM.toFixed(0)}m\n\nIs this correct?`;
+          if (confirm(msg)) {
+            updateRankingLocation(best.lat, best.lon, btn, 'gps');
+          } else {
+            showLocationOptions(btn);
+          }
+        })
+        .catch((e) => {
+          console.warn('GPS fix failed:', e);
+          tryIPLocation();
+        });
+      
+      function tryIPLocation() {
+        btn.textContent = '🌐 Using IP location...';
+        obturoIpAbortController = new AbortController();
+        fetch('https://ipapi.co/json/', { signal: obturoIpAbortController.signal })
+          .then(r => {
+            if (!r.ok) throw new Error('IP service error');
+            return r.json();
+          })
+          .then(data => {
+            if (obturoLocationLocked) return;
+            const lat = Number(data.latitude);
+            const lon = Number(data.longitude);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Invalid IP coords');
+            console.log('IP LOCATION:', lat, lon, 'City:', data.city);
+            const debugMsg = `Network location (approx):\nCity: ${data.city || ''}\nLat: ${lat.toFixed(5)}\nLon: ${lon.toFixed(5)}\n\nUse this location?`;
+            if (confirm(debugMsg)) {
+              updateRankingLocation(lat, lon, btn, 'ip');
+            } else {
+              showLocationOptions(btn);
+            }
+          })
+          .catch(err => {
+            if (err?.name === 'AbortError') return;
+            console.error('IP LOCATION FAILED:', err);
+            showLocationOptions(btn);
+          });
+      }
+      
+      function showLocationOptions(btn) {
+        btn.disabled = false;
+        btn.textContent = 'Get Location';
+        const options = [
+          { name: 'Udumbannoor (near Thodupuzha)', lat: 9.9060212, lon: 76.8142565 },
+          { name: 'Thodupuzha (Town)', lat: 9.8976798, lon: 76.7134225 },
+          { name: 'Kochi', lat: 9.9352, lon: 76.6245 },
+          { name: 'Vazhakulam', lat: 9.9437527, lon: 76.6403576 },
+          { name: 'Thiruvananthapuram', lat: 8.5241, lon: 76.9366 },
+          { name: 'Bangalore', lat: 12.9352, lon: 77.6245 },
+          { name: 'Delhi', lat: 28.7041, lon: 77.1025 },
+          { name: 'Mumbai', lat: 19.0760, lon: 72.8777 }
+        ];
+        
+        let choice = prompt(
+          'Location detection unclear. Select your city:\n\n' +
+          options.map((o, i) => `${i+1}. ${o.name}`).join('\n') +
+          `\n\nEnter number (1-${options.length}):`,
+          '1'
+        );
+        
+        if (choice) {
+          const idx = parseInt(choice) - 1;
+          if (idx >= 0 && idx < options.length) {
+            updateRankingLocation(options[idx].lat, options[idx].lon, btn);
+          } else {
+            alert('Invalid selection');
+            btn.textContent = 'Get Location';
+          }
+        }
+      }
+      
+      function updateRankingLocation(lat, lon, btn, source) {
+        obturoLocationLocked = true;
+        if (obturoIpAbortController) {
+          try { obturoIpAbortController.abort(); } catch {}
+          obturoIpAbortController = null;
+        }
+        saveUserLocation(lat, lon, source || 'confirmed');
+        console.log('SETTING LOCATION:', lat, lon);
+        document.getElementById('userLat').value = lat;
+        document.getElementById('userLon').value = lon;
+        const latDisplay = document.getElementById('latDisplay');
+        const lonDisplay = document.getElementById('lonDisplay');
+        if (latDisplay && lonDisplay) {
+          latDisplay.textContent = `Lat: ${lat.toFixed(4)}`;
+          lonDisplay.textContent = `Lon: ${lon.toFixed(4)}`;
+        }
+        showUserLocationOnMap(lat, lon);
+        btn.disabled = false;
+        btn.textContent = 'Update Location';
+        showSuccess('Location set!');
+        setTimeout(() => {
+          const url = new URL(window.location);
+          url.searchParams.set('lat', lat);
+          url.searchParams.set('lon', lon);
+          url.searchParams.set('radius', '15');
+          url.searchParams.delete('autoloc');
+          console.log('Reloading with location:', lat, lon);
+          window.location = url;
+        }, 1000);
+      }
+    }
+
+    function getBestGpsFix({ maxWaitMs, desiredAccuracyM }) {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('Geolocation not available'));
+          return;
+        }
+
+        let best = null;
+        let watchId = null;
+        const startedAt = Date.now();
+        const hardTimeout = setTimeout(() => {
+          if (watchId != null) navigator.geolocation.clearWatch(watchId);
+          if (best) resolve(best);
+          else reject(new Error('Timed out waiting for GPS fix'));
+        }, maxWaitMs);
+
+        watchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            if (obturoLocationLocked) return;
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const accuracyM = pos.coords.accuracy;
+            const ageMs = Date.now() - startedAt;
+            console.log('GPS update:', lat, lon, 'accuracy:', accuracyM, 'ageMs:', ageMs);
+
+            if (!Number.isFinite(lat) || !Number.isFinite(lon) || !Number.isFinite(accuracyM)) return;
+            if (!best || accuracyM < best.accuracyM) {
+              best = { lat, lon, accuracyM };
+              try {
+                btn.textContent = `📡 GPS ${Math.round(accuracyM)}m (${Math.min(Math.round(ageMs / 1000), 99)}s)`;
+              } catch {}
+            }
+            if (best && best.accuracyM <= desiredAccuracyM) {
+              clearTimeout(hardTimeout);
+              if (watchId != null) navigator.geolocation.clearWatch(watchId);
+              resolve(best);
+            }
+          },
+          (err) => {
+            clearTimeout(hardTimeout);
+            if (watchId != null) navigator.geolocation.clearWatch(watchId);
+            reject(err);
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+          }
+        );
+      });
+    }
+    
+    function clearLocation() {
+      const url = new URL(window.location);
+      url.searchParams.delete('lat');
+      url.searchParams.delete('lon');
+      window.location = url;
+    }
+    
+    function updateWeights() {
+      const price = parseInt(document.getElementById('priceSlider').value);
+      const power = parseInt(document.getElementById('powerSlider').value);
+      const availability = parseInt(document.getElementById('availabilitySlider').value);
+      const speed = parseInt(document.getElementById('speedSlider').value);
+      const wait = parseInt(document.getElementById('waitSlider').value);
+      const distance = parseInt(document.getElementById('distanceSlider').value);
+      
+      // Update displayed values
+      document.getElementById('priceWeight').textContent = price;
+      document.getElementById('powerWeight').textContent = power;
+      document.getElementById('availabilityWeight').textContent = availability;
+      document.getElementById('speedWeight').textContent = speed;
+      document.getElementById('waitWeight').textContent = wait;
+      document.getElementById('distanceWeight').textContent = distance;
+      
+      // Update priority indicators
+      updatePriorityIndicator('pricePriority', 'priceItem', price);
+      updatePriorityIndicator('powerPriority', 'powerItem', power);
+      updatePriorityIndicator('availabilityPriority', 'availabilityItem', availability);
+      updatePriorityIndicator('speedPriority', 'speedItem', speed);
+      updatePriorityIndicator('waitPriority', 'waitItem', wait);
+      updatePriorityIndicator('distancePriority', 'distanceItem', distance);
+      
+      // Clear active preset
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+    }
+    
+    function updatePriorityIndicator(indicatorId, itemId, value) {
+      const indicator = document.getElementById(indicatorId);
+      const item = document.getElementById(itemId);
+      
+      // Remove all priority classes
+      indicator.classList.remove('priority-high', 'priority-medium', 'priority-low');
+      item.classList.remove('high-priority');
+      
+      if (value >= 30) {
+        indicator.textContent = 'High';
+        indicator.classList.add('priority-high');
+        item.classList.add('high-priority');
+      } else if (value >= 15) {
+        indicator.textContent = 'Medium';
+        indicator.classList.add('priority-medium');
+      } else if (value > 0) {
+        indicator.textContent = 'Low';
+        indicator.classList.add('priority-low');
+      } else {
+        indicator.textContent = 'None';
+        indicator.classList.add('priority-low');
+      }
+    }
+    
+    function applyPreset(preset) {
+      // Clear all active preset buttons
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      
+      // Set active button
+      event.target.classList.add('active');
+      
+      const presets = {
+        fastest: { price: 10, power: 40, availability: 25, speed: 20, wait: 5, distance: 0 },
+        cheapest: { price: 50, power: 10, availability: 20, speed: 10, wait: 5, distance: 5 },
+        balanced: { price: 20, power: 25, availability: 25, speed: 15, wait: 15, distance: 0 },
+        convenient: { price: 10, power: 15, availability: 30, speed: 10, wait: 10, distance: 25 }
+      };
+      
+      const weights = presets[preset];
+      if (weights) {
+        document.getElementById('priceSlider').value = weights.price;
+        document.getElementById('powerSlider').value = weights.power;
+        document.getElementById('availabilitySlider').value = weights.availability;
+        document.getElementById('speedSlider').value = weights.speed;
+        document.getElementById('waitSlider').value = weights.wait;
+        document.getElementById('distanceSlider').value = weights.distance;
+        updateWeights();
+      }
+    }
+    
+    function resetWeights() {
+      applyPreset('balanced');
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        if (btn.textContent.includes('Balanced')) {
+          btn.classList.add('active');
+        }
+      });
+    }
+    
+    function rankStations() {
+      try {
+        console.log('rankStations() called');
+        const lat = document.getElementById('userLat').value;
+        const lon = document.getElementById('userLon').value;
+        console.log('Location:', lat, lon);
+        
+        if (!lat || !lon) {
+          showError('Please set your location first by clicking "Get My Location"');
+          return;
+        }
+      
+      const price = parseInt(document.getElementById('priceSlider').value);
+      const power = parseInt(document.getElementById('powerSlider').value);
+      const availability = parseInt(document.getElementById('availabilitySlider').value);
+      const speed = parseInt(document.getElementById('speedSlider').value);
+      const wait = parseInt(document.getElementById('waitSlider').value);
+      const distance = parseInt(document.getElementById('distanceSlider').value);
+      
+      const total = price + power + availability + speed + wait + distance;
+      
+      // Auto-normalize weights to sum to 100%
+      let normalizedWeights;
+      if (total === 0) {
+        // If all weights are 0, use balanced default
+        normalizedWeights = {
+          available_slots: 0.25,
+          power_kw: 0.25,
+          waiting_time: 0.15,
+          charging_time: 0.15,
+          price_per_kwh: 0.20,
+          distance: 0,
+        };
+      } else {
+        // Normalize to 0-1 range (sum to 1)
+        normalizedWeights = {
+          available_slots: availability / total,
+          power_kw: power / total,
+          waiting_time: wait / total,
+          charging_time: speed / total,
+          price_per_kwh: price / total,
+          distance: distance / total,
+        };
+      }
+      
+      console.log('Normalized weights:', normalizedWeights);
+      console.log('Total:', total, 'Normalized sum:', Object.values(normalizedWeights).reduce((a,b) => a+b, 0));
+      
+      // Show loading
+      document.getElementById('loadingSpinner').style.display = 'block';
+      document.getElementById('rankingContainer').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
+      
+      console.log('Sending request to /api/stations/topsis/');
+      
+      // Call API
+      fetch('/api/stations/topsis/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+        },
+        body: JSON.stringify({
+          lat: parseFloat(lat),
+          lng: parseFloat(lon),
+          radius: 15,
+          top_n: 10,
+          weights: normalizedWeights,
+        }),
+      })
+      .then(response => {
+        console.log('Response received:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Data received:', data.length, 'stations');
+        document.getElementById('loadingSpinner').style.display = 'none';
+        
+        if (data.error) {
+          showError(data.error);
+        } else if (Array.isArray(data) && data.length > 0) {
+          console.log('Displaying ranking');
+          displayRanking(data);
+        } else if (Array.isArray(data) && data.length === 0) {
+          showError('No stations found in this radius');
+        } else {
+          showError('Invalid response from server: ' + JSON.stringify(data));
+        }
+      })
+      .catch(error => {
+        console.error('Ranking error:', error);
+        document.getElementById('loadingSpinner').style.display = 'none';
+        showError('Error: ' + error.message);
+      });
+      } catch (e) {
+        console.error('rankStations() exception:', e);
+        alert('Error in rankStations: ' + e.message);
+      }
+    }
+    
+    function displayRanking(stations) {
+      console.log('displayRanking called with', stations.length, 'stations');
+      try {
+        const container = document.getElementById('rankingList');
+        console.log('rankingList container found:', container);
+        if (!container) {
+          console.error('ERROR: rankingList container not found!');
+          return;
+        }
+        
+        container.innerHTML = '';
+        console.log('Container cleared');
+        
+        const resultsInfo = document.getElementById('resultsInfo');
+        console.log('resultsInfo element found:', resultsInfo);
+        resultsInfo.textContent = `Showing ${stations.length} stations ranked by your preferences`;
+        
+        let cardsCreated = 0;
+        stations.forEach((station, index) => {
+          try {
+            const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+            
+            const card = document.createElement('div');
+            card.className = `ranking-card ${rankClass}`;
+            
+            const medal = `#${index + 1}`;
+            
+            card.innerHTML = `
+              <div style="text-align: center;">
+                <div class="rank-badge">${medal}</div>
+              </div>
+              
+              <div class="station-info">
+                <div class="station-name">${station.name}</div>
+                <div class="station-detail">${station.distance.toFixed(1)} km away</div>
+              </div>
+          
+          <div class="stat-box">
+            <div class="stat-value">${station.price_per_kwh.toFixed(1)}</div>
+            <div class="stat-label">₹/kWh</div>
+          </div>
+          
+          <div class="stat-box">
+            <div class="stat-value">${station.power_kw.toFixed(0)}</div>
+            <div class="stat-label">kW</div>
+          </div>
+          
+          <div class="score-badge">
+            <div class="score-number">${(station.score * 100).toFixed(0)}</div>
+            <div class="score-label">Score</div>
+          </div>
+          
+          <div style="text-align: center; display: flex; gap: 8px; justify-content: center;">
+            <button type="button" class="btn-book" onclick="openBookingModalFromRanking(${station.id}, '${station.name.replace(/'/g, "\\'")}', ${station.available_slots})">
+              Book
+            </button>
+            <button type="button" class="btn-secondary" onclick="window.location.href='/station-detail/?id=${station.id}'" style="padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+              Details
+            </button>
+          </div>
+        `;
+            
+            container.appendChild(card);
+            cardsCreated++;
+            console.log(`Card ${index + 1} appended. Total cards created: ${cardsCreated}`);
+          } catch (cardError) {
+            console.error(`Error creating card ${index}:`, cardError);
+          }
+        });
+        
+        console.log(`Total cards created: ${cardsCreated}`);
+        
+        const rankingContainer = document.getElementById('rankingContainer');
+        console.log('rankingContainer element found:', rankingContainer);
+        if (rankingContainer) {
+          rankingContainer.style.display = 'block';
+          console.log('rankingContainer displayed');
+        } else {
+          console.error('ERROR: rankingContainer not found!');
+        }
+        
+        // Also show the results-section
+        const resultsSection = document.getElementById('resultsSection');
+        console.log('resultsSection element found:', resultsSection);
+        if (resultsSection) {
+          resultsSection.classList.add('active');
+          console.log('resultsSection class active added');
+        } else {
+          console.error('ERROR: resultsSection not found!');
+        }
+      } catch (e) {
+        console.error('displayRanking error:', e);
+      }
+    }
+    
+    function showError(message) {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.className = 'error-message';
+      errorEl.textContent = '❌ ' + message;
+      errorEl.style.display = 'block';
+    }
+    
+    function showSuccess(message) {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.className = 'success-message';
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+      setTimeout(() => {
+        errorEl.style.display = 'none';
+      }, 3000);
+    }
+    
+    function openBookingModalFromRanking(stationId, stationName, availableSlots) {
+      console.log('Opening booking modal for:', stationName);
+      
+      // Create and show booking modal
+      const modal = document.createElement('div');
+      modal.id = 'bookingModalRanking';
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      `;
+      
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
+      const minDateTime = now.toISOString().slice(0, 16);
+      
+      modal.innerHTML = `
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+          <div style="font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #1a1a1a;">Book Charging Slot</div>
+          
+          <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="font-weight: 600; color: #10b981;">${stationName}</div>
+            <div style="font-size: 14px; color: #666; margin-top: 4px;">Available slots: ${availableSlots}</div>
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px;">Start Time</label>
+            <input type="datetime-local" id="bookStartTime" min="${minDateTime}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px;">Duration (hours)</label>
+            <select id="bookDuration" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+              <option value="1">1 hour</option>
+              <option value="2">2 hours</option>
+              <option value="4">4 hours</option>
+              <option value="8">8 hours</option>
+            </select>
+          </div>
+          
+          <div id="bookMessage" style="margin-bottom: 16px;"></div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button type="button" onclick="closeBookingModalRanking()" style="padding: 10px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+            <button type="button" onclick="submitBookingFromRanking(${stationId}, '${stationName.replace(/'/g, "\\'")}', ${availableSlots})" style="padding: 10px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Book Now</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Set default start time
+      document.getElementById('bookStartTime').value = minDateTime;
+    }
+    
+    function closeBookingModalRanking() {
+      const modal = document.getElementById('bookingModalRanking');
+      if (modal) {
+        modal.remove();
+      }
+    }
+    
+    function submitBookingFromRanking(stationId, stationName, availableSlots) {
+      const startTime = document.getElementById('bookStartTime').value;
+      const duration = document.getElementById('bookDuration').value;
+      const messageEl = document.getElementById('bookMessage');
+      
+      if (!startTime) {
+        messageEl.innerHTML = '<div style="color: #d32f2f; font-size: 14px;">Please select start time</div>';
+        return;
+      }
+      
+      const start = new Date(startTime);
+      const end = new Date(start.getTime() + duration * 60 * 60 * 1000);
+      
+      const payload = {
+        station_id: stationId,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+      };
+      
+      messageEl.innerHTML = '<div style="color: #1976d2; font-size: 14px;">Processing...</div>';
+      
+      // Use auth token
+      
+      fetch('/api/book/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + AUTH_TOKEN,
+        },
+        body: JSON.stringify(payload),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          messageEl.innerHTML = `<div style="color: #d32f2f; font-size: 14px;">Error: ${data.error}</div>`;
+        } else if (data.booking_id) {
+          messageEl.innerHTML = `<div style="color: #2e7d32; font-size: 14px;">Booking created! ID: ${data.booking_id}</div>`;
+          setTimeout(() => closeBookingModalRanking(), 2000);
+        } else if (data.position) {
+          messageEl.innerHTML = `<div style="color: #1976d2; font-size: 14px;">Added to waitlist at position ${data.position}</div>`;
+          setTimeout(() => closeBookingModalRanking(), 2000);
+        } else if (data.message) {
+          messageEl.innerHTML = `<div style="color: #2e7d32; font-size: 14px;">${data.message}</div>`;
+          setTimeout(() => closeBookingModalRanking(), 2000);
+        } else {
+          messageEl.innerHTML = `<div style="color: #d32f2f; font-size: 14px;">Invalid response from server</div>`;
+        }
+      })
+      .catch(error => {
+        messageEl.innerHTML = `<div style="color: #d32f2f; font-size: 14px;">Error: ${error.message}</div>`;
+      });
+    }
+    
+    // Initialize map (Leaflet)
+    let map, markersLayer, routeLayer;
+    (function initMap(){
+      try {
+        map = L.map('map').setView([9.9488215, 76.6253752], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+        routeLayer = L.layerGroup().addTo(map);
+      } catch(e) {
+        console.warn('Leaflet not available or map init failed:', e);
+      }
+    })();
+
+    function clearRoute() {
+      if (routeLayer) routeLayer.clearLayers();
+      if (markersLayer) markersLayer.clearLayers();
+      document.getElementById('rankingList').innerHTML = '';
+      document.getElementById('resultsInfo').textContent = '';
+    }
+
+    async function geocodeAddress(query) {
+      try {
+        const res = await fetch(`/geocode/?q=${encodeURIComponent(query)}`);
+        if (!res.ok) {
+          console.error('Geocode API error:', res.status);
+          return null;
+        }
+        const data = await res.json();
+        if (data && data.lat && data.lon) {
+          return { lat: data.lat, lon: data.lon, display_name: data.display_name || query };
+        }
+        return null;
+      } catch (e) {
+        console.error('Geocode error', e);
+        return null;
+      }
+    }
+
+    async function osrmRoute(src, dst) {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${src.lon},${src.lat};${dst.lon},${dst.lat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data && data.routes && data.routes.length) {
+          // Convert to [lat, lon] pairs
+          return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        }
+      } catch (e) {
+        console.error('OSRM route error', e);
+      }
+      return null;
+    }
+
+    function haversineMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // meters
+      const toRad = v => v * Math.PI / 180;
+      const φ1 = toRad(lat1), φ2 = toRad(lat2);
+      const Δφ = toRad(lat2 - lat1);
+      const Δλ = toRad(lon2 - lon1);
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function minDistanceToRouteMeters(station, routeCoords) {
+      try {
+        const latS = station.latitude !== undefined ? station.latitude : (station.lat !== undefined ? station.lat : (station.location ? station.location.lat : null));
+        const lonS = station.longitude !== undefined ? station.longitude : (station.lng !== undefined ? station.lng : (station.location ? station.location.lng : null));
+        if (latS == null || lonS == null) return Infinity;
+        let minDist = Infinity;
+        for (let i = 0; i < routeCoords.length; i++) {
+          const [rLat, rLon] = routeCoords[i];
+          const d = haversineMeters(latS, lonS, rLat, rLon);
+          if (d < minDist) minDist = d;
+        }
+        return minDist;
+      } catch (e) {
+        console.error('minDistanceToRouteMeters error', e);
+        return Infinity;
+      }
+    }
+
+    async function showRouteAndStations() {
+      const srcQ = document.getElementById('srcInput').value.trim();
+      const dstQ = document.getElementById('dstInput').value.trim();
+      if (!srcQ || !dstQ) {
+        showError('Please enter both source and destination');
+        return;
+      }
+
+      const src = await geocodeAddress(srcQ);
+      const dst = await geocodeAddress(dstQ);
+      if (!src || !dst) {
+        showError('Unable to geocode source or destination');
+        return;
+      }
+
+      // compute route
+      const route = await osrmRoute(src, dst);
+      if (!route) {
+        showError('Unable to compute route');
+        return;
+      }
+
+      // draw route
+      routeLayer.clearLayers();
+      const poly = L.polyline(route, { color: '#10b981', weight: 5 }).addTo(routeLayer);
+      map.fitBounds(poly.getBounds(), { padding: [40, 40] });
+
+      // fetch scored stations from API (use midpoint as center and large radius)
+      const midIdx = Math.floor(route.length / 2);
+      const mid = route[midIdx] || route[0];
+      const midLat = mid[0], midLon = mid[1];
+
+      // Build weights same as rankStations
+      const price = parseInt(document.getElementById('priceSlider').value);
+      const power = parseInt(document.getElementById('powerSlider').value);
+      const availability = parseInt(document.getElementById('availabilitySlider').value);
+      const speed = parseInt(document.getElementById('speedSlider').value);
+      const wait = parseInt(document.getElementById('waitSlider').value);
+      const distance = parseInt(document.getElementById('distanceSlider').value);
+
+      const weights = {
+        available_slots: availability / 100,
+        power_kw: power / 100,
+        waiting_time: wait / 100,
+        charging_time: speed / 100,
+        price_per_kwh: price / 100,
+        distance: distance / 100,
+      };
+
+      try {
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('rankingContainer').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'none';
+
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        const res = await fetch('/api/stations/topsis/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify({ lat: midLat, lng: midLon, radius: 50, top_n: 448, weights }),
+        });
+        if (!res.ok) throw new Error('Stations API error ' + res.status);
+        const stations = await res.json();
+
+        // filter by available slots and proximity to route (1000m)
+        const THRESH_METERS = 1000;
+        const filtered = stations.filter(s => (s.available_slots || 0) > 0)
+          .map(s => ({ s, distToRoute: minDistanceToRouteMeters(s, route) }))
+          .filter(o => o.distToRoute <= THRESH_METERS)
+          .sort((a,b) => a.distToRoute - b.distToRoute)
+          .map(o => o.s);
+
+        // render markers
+        markersLayer.clearLayers();
+        filtered.forEach(st => {
+          const lat = st.latitude !== undefined ? st.latitude : (st.lat !== undefined ? st.lat : (st.location ? st.location.lat : null));
+          const lon = st.longitude !== undefined ? st.longitude : (st.lng !== undefined ? st.lng : (st.location ? st.location.lng : null));
+          if (lat == null || lon == null) return;
+          const m = L.circleMarker([lat, lon], { radius: 8, color: '#2e7d32', fillColor: '#2e7d32', fillOpacity: 0.9 }).addTo(markersLayer);
+          const safeName = (st.name || 'Station').replace(/'/g, "\\'");
+          m.bindPopup(`<div style="font-weight:700;margin-bottom:6px;">${safeName}</div><div style="font-size:13px;color:#333;margin-bottom:6px;">Slots: ${st.available_slots}</div><div><button onclick="openBookingModalFromRanking(${st.id}, '${safeName}', ${st.available_slots})" style="padding:6px 10px;border:none;background:#10b981;color:#fff;border-radius:6px;cursor:pointer;">Book</button></div>`);
+        });
+
+        document.getElementById('loadingSpinner').style.display = 'none';
+
+        if (filtered.length === 0) {
+          showError('No available stations found along this route within 1 km');
+        } else {
+          displayRanking(filtered);
+          showSuccess(`Found ${filtered.length} available stations along route`);
+        }
+      } catch (e) {
+        console.error('showRouteAndStations error', e);
+        document.getElementById('loadingSpinner').style.display = 'none';
+        showError('Error fetching stations: ' + e.message);
+      }
+    }
+
+    // Initialize
+    updateWeights();
+  </script>
+  
+  <!-- Include Sidebar Navigation -->
+  {% include 'web/includes/sidebar_nav.html' %}
+  
+  <!-- Include Active Bookings Sidebar -->
+  {% include 'web/includes/active_bookings_sidebar.html' %}
+</body>
+</html>

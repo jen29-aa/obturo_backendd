@@ -6,6 +6,8 @@ from .views import (
     SmartFilteredStations,
     topsis_custom,
     my_bookings,
+    booking_detail,
+    active_bookings,
     cancel_booking,
     get_profile,
     update_profile,
@@ -25,7 +27,17 @@ from .views import (
     p2p_owner_requests,
     rate_station,
     station_rating,
-    station_full_info
+    station_full_info,
+    station_detail,
+    # Recently Viewed:
+    track_station_view,
+    recently_viewed_stations,
+    # Admin:
+    admin_dashboard_stats,
+    admin_revenue_analytics,
+    admin_user_management,
+    admin_booking_analytics,
+    admin_station_management,
 )
 
 
@@ -37,6 +49,8 @@ urlpatterns = [
     # Booking
     path("book/", create_booking),
     path("bookings/my/", my_bookings),
+    path("bookings/<int:booking_id>/", booking_detail),
+    path("bookings/active/", active_bookings),
     path("bookings/cancel/", cancel_booking),
 
     # Smart filter
@@ -71,10 +85,18 @@ urlpatterns = [
     #ratings
     path("stations/rate/", rate_station),
     path("stations/<int:station_id>/rating/", station_rating),
+    path("stations/<int:station_id>/detail/", station_detail),
 
     path("stations/full-info/", station_full_info),
 
+    # Recently Viewed
+    path("stations/track-view/", track_station_view),
+    path("stations/recently-viewed/", recently_viewed_stations),
 
+    # Admin Dashboard
+    path("admin/dashboard/stats/", admin_dashboard_stats),
+    path("admin/revenue/", admin_revenue_analytics),
+    path("admin/users/", admin_user_management),
+    path("admin/bookings/analytics/", admin_booking_analytics),
+    path("admin/stations/", admin_station_management),
 ]
-
-

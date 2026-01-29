@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Obturo - My Bookings</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0fdf4;
+    }
+    
+    /* Main container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    h1 {
+      font-size: 36px;
+      color: #065f46;
+      margin-bottom: 40px;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    /* Booking cards */
+    .bookings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+    
+    .booking-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.2s;
+    }
+    
+    .booking-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .error-alert {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .error-alert button {
+      background: transparent;
+      border: none;
+      color: #721c24;
+      cursor: pointer;
+      font-size: 20px;
+    }
+    
+    .booking-header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 20px;
+    }
+    
+    .station-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .booking-status {
+      display: inline-block;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .booking-card[data-status="active"] .booking-header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    
+    .booking-card[data-status="completed"] .booking-header {
+      background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    }
+    
+    .booking-card[data-status="cancelled"] .booking-header {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    .booking-body {
+      padding: 20px;
+    }
+    
+    .booking-time {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .time-label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    
+    .time-value {
+      font-size: 14px;
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .booking-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #059669;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .btn-danger {
+      background: #f44336;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #d32f2f;
+    }
+    
+    .no-bookings {
+      text-align: center;
+      padding: 60px 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .no-bookings-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    .no-bookings h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      color: #065f46;
+    }
+    
+    .no-bookings p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    
+    .no-bookings a {
+      display: inline-block;
+      background: #10b981;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .no-bookings a:hover {
+      background: #059669;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Main content -->
+  <div class="container">
+    <h1>📋 My Bookings</h1>
+    
+    {% if error_msg %}
+      <div class="error-alert">
+        <span>{{ error_msg }}</span>
+        <button onclick="this.parentElement.style.display='none';">&times;</button>
+      </div>
+    {% endif %}
+    
+    {% if bookings %}
+      <div class="bookings-grid">
+        {% for booking in bookings %}
+          <div class="booking-card" data-status="{{ booking.status }}">
+            <div class="booking-header">
+              <div class="station-name">{{ booking.station_name }}</div>
+              <div class="booking-status">{{ booking.status|title }}</div>
+            </div>
+            
+            <div class="booking-body">
+              <div class="booking-time">
+                <div class="time-label">Booked On</div>
+                <div class="time-value">{{ booking.created_at|default:"N/A" }}</div>
+              </div>
+              
+              <div class="booking-time">
+                <div class="time-label">Start Time</div>
+                <div class="time-value">{{ booking.start_time|default:"N/A" }}</div>
+              </div>
+              
+              <div class="booking-time">
+                <div class="time-label">End Time</div>
+                <div class="time-value">{{ booking.end_time|default:"N/A" }}</div>
+              </div>
+              
+              <div class="booking-actions">
+                {% if booking.status == "active" %}
+                  <a href="javascript:void(0);" class="btn btn-primary start-charging-btn" data-start="{{ booking.start_time }}" data-end="{{ booking.end_time }}" data-station="{{ booking.station_id }}" data-booking="{{ booking.id }}" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i class="fas fa-bolt"></i> Start Charging
+                  </a>
+                  <form method="post" style="flex: 1;">
+                    {% csrf_token %}
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                    <button type="submit" name="action" value="cancel" class="btn btn-danger" style="width: 100%;">Cancel</button>
+                  </form>
+                {% else %}
+                  <button class="btn btn-secondary" disabled>{{ booking.status|title }}</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="no-bookings">
+        <div class="no-bookings-icon">📭</div>
+        <h2>No Bookings Yet</h2>
+        <p>You haven't made any charging station bookings yet. Start exploring stations and make your first booking!</p>
+        <a href="{% url 'stations' %}">🔍 Find Stations</a>
+      </div>
+    {% endif %}
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.start-charging-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const now = new Date().getTime();
+          const startTime = new Date(this.dataset.start).getTime();
+          const endTime = new Date(this.dataset.end).getTime();
+          const station = this.dataset.station;
+          const booking = this.dataset.booking;
+          
+          if (now < startTime) {
+            alert(`Charging starts at ${new Date(startTime).toLocaleString()}`);
+            return;
+          }
+          if (now > endTime) {
+            alert('Your booking time has ended.');
+            return;
+          }
+          // Pass end time as URL parameter so charging session knows when to stop
+          window.location.href = `/charging-session/?station=${station}&booking=${booking}&endTime=${endTime}`;
+        });
+        
+        const now = new Date().getTime();
+        const startTime = new Date(btn.dataset.start).getTime();
+        const endTime = new Date(btn.dataset.end).getTime();
+        if (now < startTime || now > endTime) {
+          btn.style.opacity = '0.5';
+          btn.style.cursor = 'not-allowed';
+        }
+      });
+    });
+  </script>
+  
+  <!-- Include Sidebar Navigation -->
+  {% include 'web/includes/sidebar_nav.html' %}
+  
+  <!-- Include Active Bookings Sidebar -->
+  {% include 'web/includes/active_bookings_sidebar.html' %}
+  
+  <!-- Include Charging Widget -->
+  {% include 'web/includes/charging_widget.html' %}
+</body>
+</html>

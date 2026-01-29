@@ -25,6 +25,27 @@ class ChargingStation(models.Model):
     speed = models.IntegerField(default=50)
 
     status = models.CharField(max_length=20, default="Available")
+    
+    # Enhanced fields for detailed view
+    image_url = models.URLField(max_length=500, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    phone_number = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    operating_hours = models.CharField(max_length=100, default="24/7")
+    
+    # Facilities (JSON field or text)
+    facilities = models.TextField(null=True, blank=True, help_text="Comma-separated facilities")
+    # Example: "Parking,Restroom,Cafe,WiFi,Waiting Area"
+    
+    # Additional info
+    is_open_24_7 = models.BooleanField(default=True)
+    has_parking = models.BooleanField(default=True)
+    has_restroom = models.BooleanField(default=False)
+    has_cafe = models.BooleanField(default=False)
+    has_wifi = models.BooleanField(default=False)
+    
+    verified = models.BooleanField(default=True)
+    last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -191,3 +212,27 @@ class Waitlist(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.station.name} (pos {self.position})"
+
+
+# ====================================
+# 8. RECENTLY VIEWED STATIONS
+# ====================================
+class RecentlyViewedStation(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE,
+        related_name="recently_viewed"
+    )
+    station = models.ForeignKey(
+        ChargingStation,
+        on_delete=models.CASCADE,
+        related_name="viewed_by"
+    )
+    viewed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("user", "station")
+        ordering = ["-viewed_at"]
+
+    def __str__(self):
+        return f"{self.user.username} viewed {self.station.name}"

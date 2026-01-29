@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Obturo - Peer Chargers</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f7fa;
+    }
+    
+    nav {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 16px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    nav .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .nav-brand {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 30px;
+      list-style: none;
+    }
+    
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    h1 {
+      font-size: 36px;
+      color: #1a1a1a;
+      margin-bottom: 40px;
+    }
+    
+    .header-info {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+    }
+    
+    .header-info p {
+      font-size: 16px;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    
+    .chargers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    
+    .charger-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.2s;
+      border-left: 4px solid #ffa500;
+    }
+    
+    .charger-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+    
+    .card-header {
+      background: #fff8f0;
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .charger-owner {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+    
+    .charger-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+    
+    .charger-address {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+    
+    .specs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .spec {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+    }
+    
+    .spec-label {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    
+    .spec-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffa500;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #ffa500;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #ff8c00;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .no-chargers {
+      text-align: center;
+      padding: 60px 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .no-chargers-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <div class="nav-brand">Obturo</div>
+      <ul class="nav-links">
+        <li><a href="{% url 'dashboard' %}">🏠 Dashboard</a></li>
+        <li><a href="{% url 'stations' %}">🔍 Explore</a></li>
+        <li><a href="{% url 'bookings' %}">📋 Bookings</a></li>
+        <li><a href="{% url 'ranking' %}">Ranking</a></li>
+        <li><a href="{% url 'favorites' %}">Favorites</a></li>
+        <li><a href="{% url 'profile' %}">👤 Profile</a></li>
+      </ul>
+      <div style="display: flex; gap: 20px; align-items: center;">
+        <span style="color: white;">👤 {{ username }}</span>
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <h1>Peer-to-Peer Chargers</h1>
+    
+    <div class="header-info">
+      <p><strong>Connect with nearby EV owners!</strong></p>
+      <p>Share charging stations from personal chargers in your community. Rent or lend charging access from verified users nearby.</p>
+    </div>
+    
+    {% if chargers %}
+      <div class="chargers-grid">
+        {% for charger in chargers %}
+          <div class="charger-card">
+            <div class="card-header">
+              <div class="charger-owner">👤 Owner: {{ charger.owner }}</div>
+              <div class="charger-name">{{ charger.name }}</div>
+              <div class="charger-address">{{ charger.address }}</div>
+            </div>
+            
+            <div class="card-body">
+              <div class="specs">
+                <div class="spec">
+                  <div class="spec-label">Connector</div>
+                  <div class="spec-value">{{ charger.connector_type }}</div>
+                </div>
+                <div class="spec">
+                  <div class="spec-label">Power</div>
+                  <div class="spec-value">{{ charger.power_kw }} kW</div>
+                </div>
+                <div class="spec">
+                  <div class="spec-label">Price</div>
+                  <div class="spec-value">₹{{ charger.price_per_kwh }}/kWh</div>
+                </div>
+                <div class="spec">
+                  <div class="spec-label">Status</div>
+                  <div class="spec-value">{% if charger.is_active %}Active{% else %}Inactive{% endif %}</div>
+                </div>
+              </div>
+              
+              <div class="actions">
+                <button class="btn btn-primary">Request</button>
+                <button class="btn btn-secondary">💬 Message</button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="no-chargers">
+        <div class="no-chargers-icon"></div>
+        <h2>No Peer Chargers Nearby</h2>
+        <p style="color: #666; margin: 12px 0 20px;">There are no community chargers available in your area right now. Check back later or explore public charging stations.</p>
+        <a href="{% url 'stations' %}" style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Find Public Stations</a>
+      </div>
+    {% endif %}
+  </div>
+  <!-- Include Active Bookings Sidebar -->
+  {% include 'web/includes/active_bookings_sidebar.html' %}
+</body>
+</html>

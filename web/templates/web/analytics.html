@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Obturo - Charging Analytics</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f7fa;
+    }
+    
+    nav {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 16px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    nav .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .nav-brand {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 30px;
+      list-style: none;
+    }
+    
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    h1 {
+      font-size: 36px;
+      color: #1a1a1a;
+      margin-bottom: 40px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid #10b981;
+    }
+    
+    .stat-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .stat-sublabel {
+      font-size: 12px;
+      color: #10b981;
+      margin-top: 8px;
+    }
+    
+    .section-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      margin-bottom: 30px;
+    }
+    
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .session-item {
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border-left: 4px solid #10b981;
+    }
+    
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .session-station {
+      font-weight: 600;
+      font-size: 16px;
+      color: #1a1a1a;
+    }
+    
+    .session-status {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .status-completed {
+      background: #d1fae5;
+      color: #059669;
+    }
+    
+    .status-cancelled {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    .session-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    
+    .detail-item {
+      font-size: 13px;
+    }
+    
+    .detail-label {
+      color: #666;
+      margin-bottom: 4px;
+    }
+    
+    .detail-value {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    
+    .chart-placeholder {
+      height: 200px;
+      background: linear-gradient(135deg, #10b98120 0%, #05966920 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #059669;
+      font-weight: 600;
+      border: 2px dashed #10b981;
+    }
+    
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    
+    .no-data-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <div class="nav-brand">Obturo</div>
+      <ul class="nav-links">
+        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'stations' %}">Explore</a></li>
+        <li><a href="{% url 'bookings' %}">Bookings</a></li>
+        <li><a href="{% url 'ranking' %}">Ranking</a></li>
+        <li><a href="{% url 'favorites' %}">Favorites</a></li>
+        <li><a href="{% url 'profile' %}">Profile</a></li>
+      </ul>
+      <div style="display: flex; gap: 20px; align-items: center;">
+        <span style="color: white;">{{ username }}</span>
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <h1>Charging Analytics</h1>
+    
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-bolt" style="color: #10b981;"></i></div>
+        <div class="stat-value" id="totalSessions">0</div>
+        <div class="stat-label">Total Sessions</div>
+        <div class="stat-sublabel" id="completedSessions">0 completed</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-battery-full" style="color: #3b82f6;"></i></div>
+        <div class="stat-value" id="totalEnergy">0</div>
+        <div class="stat-label">kWh Charged</div>
+        <div class="stat-sublabel" id="avgEnergy">Avg: 0 kWh/session</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-rupee-sign" style="color: #f59e0b;"></i></div>
+        <div class="stat-value" id="totalCost">₹0</div>
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-sublabel" id="avgCost">Avg: ₹0/session</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-leaf" style="color: #22c55e;"></i></div>
+        <div class="stat-value" id="carbonSaved">0</div>
+        <div class="stat-label">kg CO₂ Saved</div>
+        <div class="stat-sublabel">vs petrol vehicles</div>
+      </div>
+    </div>
+    
+    <!-- Monthly Trends -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fas fa-chart-line"></i>
+        Monthly Charging Trends
+      </div>
+      <div class="chart-placeholder">
+        Chart visualization coming soon - Energy & Cost over time
+      </div>
+    </div>
+    
+    <!-- Session History -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fas fa-history"></i>
+        Session History
+      </div>
+      <div id="sessionsContainer">
+        <div class="no-data">
+          <div class="no-data-icon"><i class="fas fa-inbox"></i></div>
+          <p>Loading charging sessions...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Hidden auth token -->
+  <div id="authData" data-auth-token="{{ auth_token }}" style="display:none;"></div>
+  
+  <script>
+    const AUTH_TOKEN = document.getElementById('authData')?.getAttribute('data-auth-token');
+    
+    async function loadAnalytics() {
+      try {
+        const response = await fetch('/api/bookings/my/', {
+          headers: {
+            'Authorization': `Bearer ${AUTH_TOKEN}`
+          }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load bookings');
+        
+        const bookings = await response.json();
+        calculateStats(bookings);
+        displaySessions(bookings);
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+        document.getElementById('sessionsContainer').innerHTML = `
+          <div class="no-data">
+            <div class="no-data-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <p>Failed to load charging sessions</p>
+          </div>
+        `;
+      }
+    }
+    
+    function calculateStats(bookings) {
+      const completed = bookings.filter(b => b.status === 'completed');
+      const totalSessions = bookings.length;
+      const completedCount = completed.length;
+      
+      // Estimate energy based on session duration (rough estimate)
+      const totalEnergy = completed.reduce((sum, b) => {
+        const duration = (new Date(b.end_time) - new Date(b.start_time)) / (1000 * 60 * 60); // hours
+        const estimatedEnergy = duration * 30; // Assuming 30kW avg charging rate
+        return sum + estimatedEnergy;
+      }, 0);
+      
+      // Estimate cost (₹18/kWh average)
+      const totalCost = totalEnergy * 18;
+      
+      // Carbon saved: ~0.82 kg CO2 per kWh (petrol equivalent)
+      const carbonSaved = totalEnergy * 0.82;
+      
+      document.getElementById('totalSessions').textContent = totalSessions;
+      document.getElementById('completedSessions').textContent = `${completedCount} completed`;
+      document.getElementById('totalEnergy').textContent = totalEnergy.toFixed(0);
+      document.getElementById('avgEnergy').textContent = `Avg: ${completedCount > 0 ? (totalEnergy / completedCount).toFixed(1) : 0} kWh/session`;
+      document.getElementById('totalCost').textContent = `₹${totalCost.toFixed(0)}`;
+      document.getElementById('avgCost').textContent = `Avg: ₹${completedCount > 0 ? (totalCost / completedCount).toFixed(0) : 0}/session`;
+      document.getElementById('carbonSaved').textContent = carbonSaved.toFixed(0);
+    }
+    
+    function displaySessions(bookings) {
+      const container = document.getElementById('sessionsContainer');
+      
+      if (bookings.length === 0) {
+        container.innerHTML = `
+          <div class="no-data">
+            <div class="no-data-icon"><i class="fas fa-inbox"></i></div>
+            <p>No charging sessions yet</p>
+            <a href="/stations/" style="margin-top: 16px; display: inline-block; background: #10b981; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Find Charging Stations</a>
+          </div>
+        `;
+        return;
+      }
+      
+      // Sort by date descending
+      bookings.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+      
+      container.innerHTML = bookings.map(booking => {
+        const startTime = new Date(booking.start_time);
+        const endTime = new Date(booking.end_time);
+        const duration = (endTime - startTime) / (1000 * 60); // minutes
+        const estimatedEnergy = (duration / 60) * 30; // kWh
+        const estimatedCost = estimatedEnergy * 18; // ₹
+        
+        return `
+          <div class="session-item">
+            <div class="session-header">
+              <div class="session-station">${booking.station_name || 'Station #' + booking.station}</div>
+              <span class="session-status status-${booking.status}">${booking.status}</span>
+            </div>
+            <div class="session-details">
+              <div class="detail-item">
+                <div class="detail-label">Date</div>
+                <div class="detail-value">${startTime.toLocaleDateString()}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Time</div>
+                <div class="detail-value">${startTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} - ${endTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Duration</div>
+                <div class="detail-value">${Math.floor(duration)} min</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Energy (est.)</div>
+                <div class="detail-value">${estimatedEnergy.toFixed(1)} kWh</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Cost (est.)</div>
+                <div class="detail-value">₹${estimatedCost.toFixed(0)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    window.addEventListener('DOMContentLoaded', loadAnalytics);
+  </script>
+  
+  <!-- Include Sidebar Navigation -->
+  {% include 'web/includes/sidebar_nav.html' %}
+  
+  <!-- Include Active Bookings Sidebar -->
+  {% include 'web/includes/active_bookings_sidebar.html' %}
+  
+  <!-- Include Charging Widget -->
+  {% include 'web/includes/charging_widget.html' %}
+</body>
+</html>
