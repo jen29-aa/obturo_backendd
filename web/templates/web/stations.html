@@ -1,1357 +1,821 @@
-<!DOCTYPE html>
-<html>
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Obturo - Explore Charging Stations</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <title>Explore Stations — Obturo EV</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg: #131720; --card: #1a1f2e; --card2: #222836; --border: #2a3142;
+      --green: #22c55e; --gd: #16a34a; --text: #f1f5f9; --muted: #94a3b8;
+      --subtle: #64748b; --blue: #60a5fa; --orange: #fb923c; --red: #f87171;
     }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #fafbfc;
-      color: #2c3e50;
-      padding-bottom: 100px;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: "Inter","Segoe UI",sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+    a { text-decoration: none; color: inherit; }
+    .app-shell { display: flex; height: 100vh; }
+    /* ── Glassmorphism base ── */
+    /* Sidebar */
+    .sidebar { width: 220px; flex-shrink: 0; background: rgba(26,31,46,0.65); backdrop-filter: blur(22px) saturate(200%); -webkit-backdrop-filter: blur(22px) saturate(200%); border-right: 1px solid rgba(255,255,255,0.07); box-shadow: 2px 0 24px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow-y: auto; z-index: 10; }
+    .sidebar-logo { padding: 24px 20px 20px; font-size: 18px; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo i { font-size: 22px; }
+    .sidebar-menu { padding: 12px 8px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--muted); transition: background .15s, color .15s; }
+    .sidebar-item:hover { background: var(--card2); color: var(--text); }
+    .sidebar-item.active { background: rgba(34,197,94,.12); color: var(--green); font-weight: 600; }
+    .sidebar-item i { width: 20px; text-align: center; font-size: 15px; }
+    .sidebar-footer { border-top: 1px solid var(--border); padding: 16px 12px; }
+    .profile-card { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--card2); border-radius: 8px; cursor: pointer; }
+    .profile-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--green); color: #0f172a; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .profile-name { font-size: 13px; font-weight: 600; }
+    .profile-role { font-size: 11px; color: var(--subtle); }
+    /* Map */
+    .map-area { flex: 1; position: relative; overflow: hidden; }
+    #map { width: 100%; height: 100%; }
+    .map-search { position: absolute; top: 16px; left: 16px; right: 16px; z-index: 500; display: flex; gap: 10px; }
+    .map-search form { flex: 1; display: flex; gap: 10px; }
+    .map-search-inner { flex: 1; display: flex; align-items: center; gap: 10px; background: rgba(26,31,46,0.75); backdrop-filter: blur(20px) saturate(200%); -webkit-backdrop-filter: blur(20px) saturate(200%); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px; box-shadow: 0 4px 20px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,0.08); }
+    .map-search-inner input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 14px; }
+    .map-search-inner input::placeholder { color: var(--subtle); }
+    .map-search-inner i { color: var(--subtle); }
+    .map-search-btn { background: var(--green); color: #0f172a; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,.4); transition: background .15s; white-space: nowrap; }
+    .map-search-btn:hover { background: var(--gd); }
+    .heat-btn { position:absolute; bottom:60px; right:16px; z-index:500; background:rgba(26,31,46,0.82); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.12); color:var(--muted); border-radius:10px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:7px; box-shadow:0 4px 16px rgba(0,0,0,.45); transition:all .15s; white-space:nowrap; }
+    .heat-btn:hover { border-color:rgba(248,113,113,.5); color:#f87171; }
+    .heat-btn.active { background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.4); color:#f87171; }
+    .heat-legend { position:absolute; bottom:114px; right:16px; z-index:500; background:rgba(26,31,46,0.88); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.09); border-radius:10px; padding:10px 14px; font-size:11px; font-weight:700; display:none; box-shadow:0 4px 16px rgba(0,0,0,.45); }
+    .heat-legend.show { display:block; }
+    .hl-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+    .hl-row:last-child { margin-bottom:0; }
+    .hl-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .loc-btn:hover { background: rgba(34,197,94,0.12); color: var(--green); border-color: rgba(34,197,94,0.4); }
+    .loc-btn.locating { color: var(--green); animation: pulse .9s infinite; }
+    /* Side panel */
+    .side-panel { width: 340px; flex-shrink: 0; background: rgba(26,31,46,0.6); backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%); border-left: 1px solid rgba(255,255,255,0.07); box-shadow: -2px 0 24px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; }
+    .panel-head { padding: 18px 18px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .panel-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .panel-title .count { color: var(--muted); font-size: 13px; font-weight: 400; margin-left: auto; }
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-select { flex: 1; min-width: 90px; background: var(--card2); border: 1px solid var(--border); color: var(--text); font-size: 12px; border-radius: 6px; padding: 7px 24px 7px 8px; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+    .filter-select:focus { border-color: var(--green); }
+    .clear-link { font-size: 12px; color: var(--red); display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+    /* Station list */
+    .stations-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .stations-list::-webkit-scrollbar { width: 5px; }
+    .stations-list::-webkit-scrollbar-track { background: transparent; }
+    .stations-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .station-card { background: rgba(34,40,54,0.55); backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 14px; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05); transition: border-color .15s, background .15s, transform .15s, box-shadow .15s; }
+    .station-card:hover { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.05); transform: translateX(2px); box-shadow: 0 4px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07); }
+    .station-card.selected { border-color: rgba(34,197,94,0.5); background: rgba(34,197,94,0.06); }
+    .sc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 7px; }
+    .sc-name { font-size: 14px; font-weight: 700; flex: 1; line-height: 1.3; }
+    .badge { font-size: 10px; font-weight: 600; padding: 3px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
+    .badge-available { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+    .badge-limited { background: rgba(251,146,60,.15); color: var(--orange); border: 1px solid rgba(251,146,60,.25); }
+    .badge-busy { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.25); }
+    .badge-offline { background: rgba(100,116,139,.15); color: var(--subtle); border: 1px solid rgba(100,116,139,.25); }
+    .sc-meta { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+    .sc-meta i { color: var(--green); font-size: 11px; }
+    .sc-plugs { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
+    .sc-plugs i { color: var(--blue); font-size: 11px; }
+    .sc-footer { display: flex; gap: 8px; }
+    .btn-book { flex: 1; background: var(--green); color: #0f172a; border: none; border-radius: 6px; padding: 7px 10px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: inline-block; transition: background .15s; }
+    .btn-book:hover { background: var(--gd); color: #fff; }
+    .btn-details { flex: 1; background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: inline-block; transition: border-color .15s, color .15s; }
+    .btn-details:hover { border-color: var(--green); color: var(--green); }
+    .empty-state { text-align: center; padding: 50px 20px; color: var(--subtle); }
+    .empty-state i { font-size: 36px; margin-bottom: 12px; display: block; }
+    .empty-state p { font-size: 13px; line-height: 1.6; }
+    /* Range Filter */
+    .rf-toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 10px; padding: 9px 12px;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 8px; cursor: pointer;
+      transition: border-color .15s, background .15s;
     }
-    
-    body.charging-active {
-      padding-bottom: 140px;
+    .rf-toggle-row:hover { border-color: var(--green); }
+    .rf-toggle-row.active { border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.06); }
+    .rf-toggle-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); }
+    .rf-toggle-label i { color: var(--green); font-size: 14px; }
+    .rf-pill {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+      background: var(--border); color: var(--muted); letter-spacing: .5px;
+      transition: background .15s, color .15s;
     }
-    
-    /* Header */
-    .header {
-      background: #ffffff;
-      color: #2c3e50;
-      padding: 16px 0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      border-bottom: 1px solid #e8eaed;
+    .rf-toggle-row.active .rf-pill { background: rgba(34,197,94,.18); color: var(--green); }
+    .rf-body {
+      display: none; padding: 12px;
+      background: rgba(34,197,94,.04); border: 1px solid rgba(34,197,94,.15);
+      border-top: none; border-radius: 0 0 8px 8px;
+      margin-top: -2px;
     }
-    
-    .header-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .logo {
-      font-size: 24px;
-      font-weight: 700;
-    }
-    
-    .selected-car-badge {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 10px 16px;
-      border-radius: 6px;
-      font-weight: 500;
-    }
-    
-    /* Breadcrumb */
-    .breadcrumb {
-      max-width: 1400px;
-      margin: 20px auto;
-      padding: 0 20px;
-      font-size: 14px;
-      color: #666;
-    }
-    
-    .breadcrumb a {
-      color: #10b981;
-      text-decoration: none;
-      margin: 0 8px;
-    }
-    
-    /* Main container */
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 20px 40px;
-    }
-    
-    /* Title section */
-    .title-section {
-      margin-bottom: 40px;
-    }
-    
-    .title-section h1 {
-      font-size: 36px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      color: #1a1a1a;
-    }
-    
-    .title-section p {
-      font-size: 16px;
-      color: #666;
-      line-height: 1.6;
-    }
-    
-    /* Search and filters */
-    .search-section {
-      margin-bottom: 40px;
-    }
-    
-    .search-bar {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    
-    .search-input {
-      flex: 1;
-      padding: 14px 18px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: border-color 0.2s;
-    }
-    
-    .search-input:focus {
-      outline: none;
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-    
-    .search-btn {
-      padding: 10px 24px;
-      background: #10b981;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: 500;
+    .rf-body.open { display: block; animation: rfSlide .18s ease; }
+    @keyframes rfSlide { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .rf-car-row { display: flex; align-items: center; gap: 7px; font-size: 12px; margin-bottom: 12px; }
+    .rf-car-name { font-weight: 700; color: var(--text); }
+    .rf-car-range { color: var(--muted); }
+    .rf-car-range span { color: var(--green); font-weight: 700; }
+    .rf-slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .rf-slider-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
+    .rf-slider {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; border-radius: 4px; outline: none;
+      background: linear-gradient(to right, var(--green) 0%, var(--green) 75%, var(--border) 75%);
       cursor: pointer;
-      transition: background 0.2s;
-      font-size: 14px;
     }
-    
-    .search-btn:hover {
-      background: #059669;
-    }
-    
-    /* Filter bar */
-    .filter-bar {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .filter-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #666;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .filter-select {
-      padding: 12px 14px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      background: white;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-    
-    .filter-select:focus {
-      outline: none;
-      border-color: #10b981;
-    }
-    
-    /* Results section */
-    .results-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #ddd;
-    }
-    
-    .results-title {
-      font-size: 18px;
-      font-weight: 600;
-    }
-    
-    .results-count {
-      font-size: 14px;
-      color: #666;
-    }
-    
-    /* Station cards */
-    .stations-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-    
-    .station-card {
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      transition: all 0.2s;
-      border-left: 3px solid #10b981;
-    }
-    
-    .station-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-      transform: translateY(-2px);
-    }
-    
-    .card-header {
-      padding: 18px;
-      background: #f5f5f5;
-      border-bottom: 1px solid #eeeeee;
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-    }
-    
-    .station-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 4px;
-    }
-    
-    .station-address {
-      font-size: 12px;
-      color: #888;
-    }
-    
-    .status-badge {
-      background: #c8e6c9;
-      color: #2e7d32;
-      padding: 4px 10px;
-      border-radius: 16px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    
-    .card-body {
-      padding: 16px;
-    }
-    
-    .topsis-badge {
-      display: inline-block;
-      background: #e8f5e9;
-      color: #2e7d32;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 12px;
-    }
-    
-    .topsis-label {
-      font-size: 10px;
-      opacity: 0.9;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .topsis-score {
-      font-size: 14px;
-      margin-top: 2px;
-    }
-    
-    .specs-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    
-    .spec {
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
-      text-align: center;
-    }
-    
-    .spec-icon {
-      font-size: 20px;
-      margin-bottom: 6px;
-    }
-    
-    .spec-label {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-    }
-    
-    .spec-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: #10b981;
-    }
-    
-    .spec-unit {
-      font-size: 12px;
-      color: #999;
-      font-weight: 400;
-    }
-    
-    .card-footer {
-      padding: 16px 20px;
-      border-top: 1px solid #e0e0e0;
-      display: flex;
-      gap: 12px;
-    }
-    
-    .btn-primary {
-      flex: 1;
-      padding: 12px;
-      background: #10b981;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      font-size: 14px;
-    }
-    
-    .btn-primary:hover {
-      background: #059669;
-    }
-    
-    .btn-secondary {
-      flex: 1;
-      padding: 12px;
-      background: white;
-      color: #10b981;
-      border: 2px solid #10b981;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 14px;
-    }
-    
-    .btn-secondary:hover {
-      background: #ecfdf5;
-    }
-    
-    .no-results {
-      text-align: center;
-      padding: 60px 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    
-    .no-results-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-    
-    .no-results h2 {
-      font-size: 20px;
-      margin-bottom: 8px;
-    }
-    
-    .no-results p {
-      color: #666;
-      font-size: 15px;
-    }
-    
-    /* Pagination */
-    .pagination {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 40px;
-    }
-    
-    .pagination a, .pagination span {
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-      text-decoration: none;
-      color: #333;
-      font-size: 14px;
-    }
-    
-    .pagination a:hover {
-      background: #f0f0f0;
-    }
-    
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 5000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.4);
-      animation: fadeIn 0.2s;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    .modal-content {
-      background-color: white;
-      margin: 10% auto;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      width: 90%;
-      max-width: 500px;
-      animation: slideIn 0.3s;
-    }
-    
-    @keyframes slideIn {
-      from { transform: translateY(-50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    
-    .modal-header {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #e0e0e0;
-      padding-bottom: 15px;
-    }
-    
-    .modal-body {
-      margin-bottom: 30px;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .form-group label {
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: #333;
-      font-size: 14px;
-    }
-    
-    .form-group input,
-    .form-group select {
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      transition: border-color 0.2s;
-    }
-    
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-    
-    .modal-footer {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    }
-    
-    .modal-footer button {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 14px;
-    }
-    
-    .modal-footer .btn-confirm {
-      background: #10b981;
-      color: white;
-    }
-    
-    .modal-footer .btn-confirm:hover {
-      background: #059669;
-    }
-    
-    .modal-footer .btn-cancel {
-      background: #f0f0f0;
-      color: #333;
-    }
-    
-    .modal-footer .btn-cancel:hover {
-      background: #e0e0e0;
-    }
-    
-    .station-info {
-      background: #f8f9fa;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-    
-    .station-info div {
-      margin-bottom: 8px;
-    }
-    
-    .loading-spinner {
-      display: none;
-      text-align: center;
-    }
-    
-    .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #10b981;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .alert {
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      font-size: 14px;
-    }
-    
-    .alert-success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    
-    .alert-error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    
-    .alert-warning {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeeba;
-    }
+    .rf-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--green); cursor: pointer; border: 2px solid #0f172a; box-shadow: 0 0 6px rgba(34,197,94,.5); }
+    .rf-pct { font-size: 13px; font-weight: 800; color: var(--green); min-width: 36px; text-align: right; flex-shrink: 0; }
+    .rf-reach-row { display: flex; align-items: center; justify-content: space-between; }
+    .rf-reach-info { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .rf-reach-info strong { color: var(--text); font-size: 13px; }
+    .rf-reach-count { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 8px; background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+    .rf-loc-warn { font-size: 11px; color: var(--orange); margin-top: 8px; display: flex; align-items: center; gap: 5px; }
+    /* Station card dim state */
+    .station-card.out-of-range { opacity: .35; pointer-events: none; }
+    .rf-reach-badge {
+      display: none; margin-left: auto; font-size: 10px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px;
+    }
+    .station-card.in-range .rf-reach-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+    .station-card.out-of-range .rf-reach-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(241,113,113,.12); color: var(--red); border: 1px solid rgba(241,113,113,.2); }
+    /* Popup */
+    .leaflet-popup-content-wrapper { background: rgba(26,31,46,0.85) !important; backdrop-filter: blur(20px) saturate(200%) !important; -webkit-backdrop-filter: blur(20px) saturate(200%) !important; color: var(--text) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 12px !important; box-shadow: 0 12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,0.08) !important; padding: 0 !important; }
+    .leaflet-popup-tip { background: rgba(26,31,46,0.85) !important; }
+    .leaflet-popup-content { margin: 0 !important; }
+    .popup-inner { padding: 14px 16px; min-width: 200px; }
+    .popup-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .popup-info { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .popup-actions { display: flex; gap: 8px; }
+    .popup-btn-book { flex: 1; background: var(--green); color: #0f172a; border: none; border-radius: 6px; padding: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .popup-btn-details { flex: 1; background: var(--card2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    /* ── Crowd Reports ── */
+    .btn-report { flex: 1; background: transparent; color: #fb923c; border: 1px solid rgba(251,146,60,.35); border-radius: 6px; padding: 7px 10px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: inline-block; transition: border-color .15s, background .15s; }
+    .btn-report:hover { border-color: #fb923c; background: rgba(251,146,60,.08); }
+    .rpt-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 9000; display: none; align-items: center; justify-content: center; }
+    .rpt-overlay.open { display: flex; }
+    .rpt-box { background: rgba(26,31,46,0.82); backdrop-filter: blur(28px) saturate(220%); -webkit-backdrop-filter: blur(28px) saturate(220%); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; width: 340px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,0.08); }
+    .rpt-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .rpt-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    .rpt-types { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .rpt-type-btn { display: flex; align-items: center; gap: 10px; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+    .rpt-type-btn:hover, .rpt-type-btn.active { background: rgba(255,255,255,.04); }
+    .rpt-type-btn .rpt-icon { font-size: 16px; width: 22px; text-align: center; }
+    .rpt-broken.active { border-color: #f87171; color: #f87171; }
+    .rpt-queue.active  { border-color: #fb923c; color: #fb923c; }
+    .rpt-closed.active { border-color: #94a3b8; color: #94a3b8; }
+    .rpt-offline.active{ border-color: #fbbf24; color: #fbbf24; }
+    .rpt-clean.active  { border-color: #22c55e; color: #22c55e; }
+    .rpt-note { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12px; padding: 9px 12px; resize: none; margin-bottom: 14px; box-sizing: border-box; }
+    .rpt-note:focus { outline: none; border-color: var(--green); }
+    .rpt-actions { display: flex; gap: 10px; }
+    .rpt-submit { flex: 1; background: #fb923c; color: #0f172a; border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .rpt-submit:hover { background: #f97316; }
+    .rpt-cancel { background: var(--card2); color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    /* Report map pins */
+    .rpt-map-icon { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid rgba(0,0,0,.25); }
+    .rpt-map-icon span { transform: rotate(45deg); font-size: 13px; line-height: 1; }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <div class="header">
-    <div class="header-content">
-      <div style="display: flex; gap: 20px; align-items: center; flex: 1;">
-        <a href="{% url 'home' %}" style="text-decoration: none; color: inherit;">
-          <div class="logo">Obturo</div>
-        </a>
-        <!-- Navigation Links -->
-        <div style="display: flex; gap: 25px; margin-left: 40px;">
-          <a href="{% url 'home' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Home</a>
-          <a href="{% url 'stations' %}" style="color: #2c3e50; text-decoration: none; font-weight: 600; opacity: 1; border-bottom: 2px solid #1e88e5;">Explore</a>
-          <a href="{% url 'bookings' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Bookings</a>
-          <a href="{% url 'ranking' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Ranking</a>
-          <a href="{% url 'profile' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Profile</a>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo"><i class="fa-solid fa-bolt"></i> Obturo EV</div>
+    <div class="sidebar-menu">
+      <a href="{% url 'home' %}" class="sidebar-item"><i class="fa-solid fa-house"></i><span>Home</span></a>
+      <a href="{% url 'stations' %}" class="sidebar-item active"><i class="fa-solid fa-map-location-dot"></i><span>Explore Stations</span></a>
+      <a href="{% url 'route_map' %}" class="sidebar-item"><i class="fa-solid fa-route"></i><span>Route Planner</span></a>
+      <a href="{% url 'bookings' %}" class="sidebar-item"><i class="fa-solid fa-calendar-check"></i><span>My Bookings</span></a>
+      <a href="{% url 'profile' %}" class="sidebar-item"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+      <a href="{% url 'favorites' %}" class="sidebar-item"><i class="fa-solid fa-star"></i><span>Favorites</span></a>
+      <a href="{% url 'peer_chargers' %}" class="sidebar-item"><i class="fa-solid fa-users"></i><span>Peer Chargers</span></a>
+      <a href="{% url 'ranking' %}" class="sidebar-item"><i class="fa-solid fa-trophy"></i><span>Ranking</span></a>
+      <a href="{% url 'analytics' %}" class="sidebar-item"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a>
+      <a href="{% url 'admin_dashboard' %}" class="sidebar-item"><i class="fa-solid fa-shield-halved"></i><span>Admin Dashboard</span></a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="profile-card" onclick="window.location.href=&quot;{% url 'profile' %}&quot;">
+        <div class="profile-avatar">{{ user.username|first|upper|default:"U" }}</div>
+        <div>
+          <div class="profile-name">{{ user.username|default:"User" }}</div>
+          <div class="profile-role">Pro Member</div>
+        </div>
+        <i class="fa-solid fa-chevron-right" style="color:var(--subtle);font-size:12px;margin-left:auto;"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map area -->
+  <div class="map-area">
+    <div id="map"></div>
+    <!-- Heatmap toggle button -->
+    <button id="heatBtn" class="heat-btn" onclick="toggleHeatmap()" title="Toggle congestion heatmap">
+      <i class="fa fa-fire"></i> Congestion Map
+    </button>
+    <div class="heat-legend" id="heatLegend">
+      <div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:8px;">Slot Congestion</div>
+      <div class="hl-row"><div class="hl-dot" style="background:#22c55e;"></div><span style="color:var(--muted);">Available</span></div>
+      <div class="hl-row"><div class="hl-dot" style="background:#fbbf24;"></div><span style="color:var(--muted);">Limited</span></div>
+      <div class="hl-row"><div class="hl-dot" style="background:#ef4444;"></div><span style="color:var(--muted);">Full / Busy</span></div>
+    </div>
+    <div class="map-search">
+      <button type="button" id="locBtn" class="loc-btn" title="Use my location" onclick="gotoMyLocation()"><i class="fa-solid fa-location-crosshairs"></i></button>
+      <form method="get" action="{% url 'stations' %}">
+        <input type="hidden" name="lat" id="hidLat" value="{{ current_filters.lat }}">
+        <input type="hidden" name="lon" id="hidLon" value="{{ current_filters.lon }}">
+        <input type="hidden" name="radius" id="hidRadius" value="{{ current_filters.radius|default:'25' }}">
+        <div class="map-search-inner">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" name="q" placeholder="Search stations, cities, areas" value="{{ current_filters.q }}">
+        </div>
+        <button type="submit" class="map-search-btn"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="side-panel">
+    <div class="panel-head">
+      <div class="panel-title">
+        <i class="fa-solid fa-charging-station" style="color:var(--green);"></i>
+        Nearby Stations
+        <span class="count">{{ stations|length }} found</span>
+      </div>
+      <form method="get" action="{% url 'stations' %}" id="filterForm">
+        <input type="hidden" name="q" value="{{ current_filters.q }}">
+        {% if current_filters.lat %}<input type="hidden" name="lat" value="{{ current_filters.lat }}">{% endif %}
+        {% if current_filters.lon %}<input type="hidden" name="lon" value="{{ current_filters.lon }}">{% endif %}
+        <input type="hidden" name="radius" id="filterRadius" value="{{ current_filters.radius|default:'25' }}">
+        <div class="filter-row">
+          <select class="filter-select" name="charger_type" onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Types</option>
+            <option value="AC"{% if current_filters.charger_type == 'AC' %} selected{% endif %}>AC Slow</option>
+            <option value="DC"{% if current_filters.charger_type == 'DC' %} selected{% endif %}>DC Fast</option>
+          </select>
+          <select class="filter-select" name="connector_type" onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Connectors</option>
+            <option value="CCS2"{% if current_filters.connector_type == 'CCS2' %} selected{% endif %}>CCS2</option>
+            <option value="Type2"{% if current_filters.connector_type == 'Type2' %} selected{% endif %}>Type 2</option>
+            <option value="CHAdeMO"{% if current_filters.connector_type == 'CHAdeMO' %} selected{% endif %}>CHAdeMO</option>
+            <option value="GB/T"{% if current_filters.connector_type == 'GB/T' %} selected{% endif %}>GB/T</option>
+          </select>
+          <select class="filter-select" name="available" onchange="document.getElementById('filterForm').submit()">
+            <option value="">All Status</option>
+            <option value="1"{% if current_filters.available %} selected{% endif %}>Available Now</option>
+          </select>
+          <select class="filter-select" title="Radius" onchange="document.getElementById('filterRadius').value=this.value;document.getElementById('filterForm').submit()">
+            <option value="10"{% if current_filters.radius == '10' %} selected{% endif %}>10 km</option>
+            <option value="25"{% if current_filters.radius == '25' or not current_filters.radius %} selected{% endif %}>25 km</option>
+            <option value="50"{% if current_filters.radius == '50' %} selected{% endif %}>50 km</option>
+            <option value="100"{% if current_filters.radius == '100' %} selected{% endif %}>100 km</option>
+          </select>
+        </div>
+        {% if current_filters.charger_type or current_filters.connector_type or current_filters.available or current_filters.q %}
+        <a href="{% url 'stations' %}" class="clear-link"><i class="fa-solid fa-xmark"></i> Clear all filters</a>
+        {% endif %}
+      </form>
+
+      <!-- Range Filter -->
+      <div class="rf-toggle-row" id="rfToggleRow" onclick="toggleRangeFilter()">
+        <div class="rf-toggle-label">
+          <i class="fa-solid fa-battery-three-quarters"></i>
+          Range-Aware Filter
+        </div>
+        <span class="rf-pill" id="rfPill">OFF</span>
+      </div>
+      <div class="rf-body" id="rfBody">
+        <div class="rf-car-row">
+          <i class="fa-solid fa-car" style="color:var(--green);font-size:13px;"></i>
+          <span class="rf-car-name">{{ car_name }}</span>
+          <span class="rf-car-range">&bull; ARAI <span>{{ car_range_km }} km</span></span>
+        </div>
+        <div class="rf-slider-row">
+          <span class="rf-slider-label">Battery</span>
+          <input class="rf-slider" type="range" id="rfSlider" min="5" max="100" value="75" oninput="onSliderChange(this.value)">
+          <span class="rf-pct" id="rfPctLabel">75%</span>
+        </div>
+        <div class="rf-reach-row">
+          <div class="rf-reach-info">
+            <i class="fa-solid fa-location-crosshairs" style="color:var(--green)"></i>
+            Reachable: <strong id="rfReachKm">— km</strong>
+          </div>
+          <span class="rf-reach-count" id="rfReachCount">— stations</span>
+        </div>
+        <div class="rf-loc-warn" id="rfLocWarn" style="display:none">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          Enable location to activate range circle on map
         </div>
       </div>
-      <div style="display: flex; gap: 15px; align-items: center;">
-        {% if selected_car %}
-          <div class="selected-car-badge" style="background: #e8eaed; color: #2c3e50;">{{ selected_car.name }}</div>
-        {% endif %}
-        <a href="{% url 'logout' %}" style="background: #f5f5f5; color: #2c3e50; border: 1px solid #ddd; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">Logout</a>
-      </div>
     </div>
-  </div>
-  
-  <!-- Breadcrumb -->
-  <div class="breadcrumb">
-    <a href="{% url 'home' %}">Home</a> > <span>Explore Chargers</span>
-  </div>
-  
-  <!-- Main Container -->
-  <div class="container">
-    <!-- Title Section -->
-    <div class="title-section">
-      <h1>Explore EV Charging Stations</h1>
-      <p>Find and compare charging stations across India. Filter by charger type, connector, power output, and price to find the perfect charging solution for your {{ selected_car.name }}.</p>
-    </div>
-    
-    <!-- Search and Filter Section -->
-    <div class="search-section">
-      <div class="search-bar">
-        <form method="get" style="display: flex; gap: 12px; width: 100%; flex-wrap: wrap;">
-          <input type="text" name="q" class="search-input" placeholder="Search by city or location..." value="{{ current_filters.q }}">
-          <button type="button" class="search-btn" onclick="getMyLocation()">My Location</button>
-          <button type="submit" class="search-btn">Search</button>
-          <input type="hidden" id="lat" name="lat" value="{{ current_filters.lat }}">
-          <input type="hidden" id="lon" name="lon" value="{{ current_filters.lon }}">
-        </form>
-      </div>
-      
-      {% if has_location %}
-        <div style="margin-bottom: 16px; padding: 12px; background: #e8f5e9; border-radius: 8px; color: #2e7d32; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #4caf50;">
-          <span>Showing stations within <strong id="radiusDisplay">{{ current_filters.radius }} km</strong> of your location (Lat: {{ current_filters.lat|floatformat:2 }}, Lon: {{ current_filters.lon|floatformat:2 }})</span>
-          <button type="button" onclick="clearLocationFilter()" style="background: #e0e0e0; color: #2c3e50; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; border: none;">Clear</button>
+
+    <div class="stations-list" id="stationsList">
+      {% for station in stations %}
+      <div class="station-card" id="sc-{{ station.id }}"
+           data-lat="{{ station.latitude|default:'10.0081' }}"
+           data-lon="{{ station.longitude|default:'76.3126' }}"
+           onclick="focusStation({{ station.id }}, {{ station.latitude|default:'10.0081' }}, {{ station.longitude|default:'76.3126' }})">
+        <div class="sc-head">
+          <div class="sc-name">{{ station.name }}</div>
+          {% if station.available_slots > 1 %}
+            <span class="badge badge-available"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Available</span>
+          {% elif station.available_slots == 1 %}
+            <span class="badge badge-limited"><i class="fa-solid fa-circle" style="font-size:6px;"></i> 1 Left</span>
+          {% elif station.total_slots > 0 %}
+            <span class="badge badge-busy"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Busy</span>
+          {% else %}
+            <span class="badge badge-offline">Offline</span>
+          {% endif %}
+          <span class="rf-reach-badge" id="rfb-{{ station.id }}"></span>
         </div>
-      {% endif %}
-      
-      <!-- Manual Location Input -->
-      <div style="margin-bottom: 16px; padding: 12px; background: #fff3e0; border-radius: 8px; color: #e65100; font-size: 13px; border-left: 4px solid #ff9800;">
-        <details style="cursor: pointer;">
-          <summary style="font-weight: 600;">ℹ️ Location incorrect? Enter coordinates manually</summary>
-          <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <input type="number" id="manualLat" placeholder="Latitude" step="0.0001" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 140px; font-size: 13px;">
-            <input type="number" id="manualLon" placeholder="Longitude" step="0.0001" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 140px; font-size: 13px;">
-            <button type="button" onclick="setManualLocation()" class="search-btn" style="flex-shrink: 0; padding: 8px 16px;">Set Location</button>
-            <button type="button" onclick="clearLocationCache()" class="search-btn" style="flex-shrink: 0; padding: 8px 16px; background: #757575;">Clear Cache</button>
-          </div>
-          <p style="margin-top: 8px; font-size: 12px; color: #666;">Pro tip: Search by city name (e.g., "Delhi", "Mumbai") for accurate results</p>
-        </details>
+        <div class="sc-meta"><i class="fa-solid fa-location-dot"></i> {{ station.address|default:"—" }}{% if station.distance %} &bull; {{ station.distance }} mi{% endif %}</div>
+        <div class="sc-plugs">
+          <i class="fa-solid fa-plug-circle-bolt"></i>
+          {{ station.available_slots|default:"0" }}/{{ station.total_slots|default:"0" }} slots{% if station.charger_type %} &bull; {{ station.charger_type }}{% endif %}{% if station.connector_type %} &bull; {{ station.connector_type }}{% endif %}{% if station.power_kw %} &bull; {{ station.power_kw }} kW{% endif %}
+        </div>
+        <div class="sc-footer">
+          <a href="{% url 'book_station' station.id %}" class="btn-book" onclick="event.stopPropagation()"><i class="fa-solid fa-bolt"></i> Book Now</a>
+          <a href="{% url 'station_detail' %}?id={{ station.id }}" class="btn-details" onclick="event.stopPropagation()"><i class="fa-solid fa-circle-info"></i> Details</a>
+          <button class="btn-report" onclick="event.stopPropagation();openReportModal({{ station.id }},'{{ station.name|escapejs }}')"><i class="fa-solid fa-triangle-exclamation"></i></button>
+        </div>
       </div>
-      
-      <div class="filter-bar">
-        <form method="get" style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
-          <div class="filter-group">
-            <label class="filter-label">Charger Type</label>
-            <select name="charger_type" class="filter-select" onchange="this.form.submit();">
-              <option value="">All Types</option>
-              <option value="DC" {% if current_filters.charger_type == 'DC' %}selected{% endif %}>DC Fast Charging</option>
-              <option value="AC" {% if current_filters.charger_type == 'AC' %}selected{% endif %}>AC Charging</option>
-            </select>
-          </div>
-          
-          <div class="filter-group">
-            <label class="filter-label">Connector Type</label>
-            <select name="connector_type" class="filter-select" onchange="this.form.submit();">
-              <option value="">All Connectors</option>
-              <option value="CCS2" {% if current_filters.connector_type == 'CCS2' %}selected{% endif %}>CCS2</option>
-              <option value="Type2" {% if current_filters.connector_type == 'Type2' %}selected{% endif %}>Type 2</option>
-              <option value="CHAdeMO" {% if current_filters.connector_type == 'CHAdeMO' %}selected{% endif %}>CHAdeMO</option>
-            </select>
-          </div>
-          
-          <div class="filter-group">
-            <label class="filter-label">Min Power (kW)</label>
-            <select name="min_power" class="filter-select" onchange="this.form.submit();">
-              <option value="">Any</option>
-              <option value="7" {% if current_filters.min_power == '7' %}selected{% endif %}>7+ kW</option>
-              <option value="22" {% if current_filters.min_power == '22' %}selected{% endif %}>22+ kW</option>
-              <option value="50" {% if current_filters.min_power == '50' %}selected{% endif %}>50+ kW</option>
-              <option value="150" {% if current_filters.min_power == '150' %}selected{% endif %}>150+ kW</option>
-            </select>
-          </div>
-          
-          <div class="filter-group">
-            <label class="filter-label">Max Price (₹/kWh)</label>
-            <select name="max_price" class="filter-select" onchange="this.form.submit();">
-              <option value="">Any</option>
-              <option value="10" {% if current_filters.max_price == '10' %}selected{% endif %}>₹10 or less</option>
-              <option value="15" {% if current_filters.max_price == '15' %}selected{% endif %}>₹15 or less</option>
-              <option value="20" {% if current_filters.max_price == '20' %}selected{% endif %}>₹20 or less</option>
-              <option value="25" {% if current_filters.max_price == '25' %}selected{% endif %}>₹25 or less</option>
-            </select>
-          </div>
-          
-          <!-- Preserve location params when filtering -->
-          <input type="hidden" name="lat" value="{{ current_filters.lat }}">
-          <input type="hidden" name="lon" value="{{ current_filters.lon }}">
-          <input type="hidden" name="q" value="{{ current_filters.q }}">
-          <input type="hidden" name="radius" value="{{ current_filters.radius }}">
-        </form>
-        
-        {% if has_location %}
-          <div class="filter-group">
-            <label class="filter-label">Radius (km)</label>
-            <form method="get">
-              <select name="radius" class="filter-select" onchange="this.form.submit();">
-                <option value="10" {% if current_filters.radius == '10' %}selected{% endif %}>10 km</option>
-                <option value="25" {% if current_filters.radius == '25' %}selected{% endif %}>25 km</option>
-                <option value="50" {% if current_filters.radius == '50' %}selected{% endif %}>50 km</option>
-                <option value="100" {% if current_filters.radius == '100' %}selected{% endif %}>100 km</option>
-              </select>
-              <!-- Preserve location params when changing radius -->
-              <input type="hidden" name="lat" value="{{ current_filters.lat }}">
-              <input type="hidden" name="lon" value="{{ current_filters.lon }}">
-              <input type="hidden" name="q" value="{{ current_filters.q }}">
-              <input type="hidden" name="charger_type" value="{{ current_filters.charger_type }}">
-              <input type="hidden" name="connector_type" value="{{ current_filters.connector_type }}">
-              <input type="hidden" name="min_power" value="{{ current_filters.min_power }}">
-              <input type="hidden" name="max_price" value="{{ current_filters.max_price }}">
-            </form>
-          </div>
-        {% endif %}
+      {% empty %}
+      <div class="empty-state">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <p>No stations found.<br>Try adjusting your filters or search.</p>
       </div>
+      {% endfor %}
     </div>
-    
-    <!-- Results -->
-    {% if error_msg %}
-      <div style="padding: 24px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; margin-bottom: 24px; color: #856404;">
-        <div style="font-weight: 600; margin-bottom: 8px;">No Search Performed</div>
-        <div>{{ error_msg }}</div>
-      </div>
-    {% endif %}
-    
-    {% if stations %}
-      <div class="results-header">
-        <div class="results-title">Results</div>
-        <div class="results-count">Showing {{ stations|length }} station{{ stations|length|pluralize }}</div>
-      </div>
-      
-      <div class="stations-grid">
-        {% for s in stations %}
-          <div class="station-card">
-            <div class="card-header">
-              <div>
-                <div class="station-name">{{ s.name }}</div>
-                <div class="station-address">{{ s.address }}</div>
-              </div>
-              <div class="status-badge">
-                {% if s.available_slots > 0 %}
-                  Available
-                {% else %}
-                  Full (Waitlist)
-                {% endif %}
-              </div>
-            </div>
-            
-            <div class="card-body">
-              {% if s.topsis_score %}
-                <div class="topsis-badge">
-                  <div class="topsis-label">Quality Score</div>
-                  <div class="topsis-score">{{ s.topsis_score|floatformat:1 }}/1.0</div>
-                </div>
-              {% endif %}
-              <div class="specs-container">
-                <div class="spec">
-                  <div class="spec-icon"><i class="fas fa-bolt" style="color:#34d399;"></i></div>
-                  <div class="spec-label">Type</div>
-                  <div class="spec-value">{{ s.charger_type|default_if_none:"DC" }}</div>
-                </div>
-                
-                <div class="spec">
-                  <div class="spec-icon"><i class="fas fa-plug" style="color:#34d399;"></i></div>
-                  <div class="spec-label">Connector</div>
-                  <div class="spec-value">{{ s.connector_type|default_if_none:"CCS2" }}</div>
-                </div>
-                
-                <div class="spec">
-                  <div class="spec-icon"><i class="fas fa-charging-station" style="color:#34d399;"></i></div>
-                  <div class="spec-label">Power</div>
-                  <div class="spec-value">{{ s.power_kw|default_if_none:30 }}<span class="spec-unit">kW</span></div>
-                </div>
-                
-                <div class="spec">
-                  <div class="spec-icon"><i class="fas fa-indian-rupee-sign" style="color:#34d399;"></i></div>
-                  <div class="spec-label">Price</div>
-                  <div class="spec-value">₹{{ s.price_per_kwh|default_if_none:18 }}<span class="spec-unit">/kWh</span></div>
-                </div>
-                
-                <div class="spec">
-                  <div class="spec-icon"><i class="fas fa-stopwatch" style="color:#34d399;"></i></div>
-                  <div class="spec-label">Wait</div>
-                  <div class="spec-value">{{ s.waiting_time|default_if_none:5 }}<span class="spec-unit">min</span></div>
-                </div>
-                
-                <div class="spec">
-                  <div class="spec-icon"><i class="fas fa-route" style="color:#34d399;"></i></div>
-                  <div class="spec-label">Distance</div>
-                  <div class="spec-value">{{ s.distance|default_if_none:"N/A" }}<span class="spec-unit">km</span></div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="card-footer">
-              <button class="btn-primary" onclick="openBookingModal({{ s.id }}, '{{ s.name }}', {{ s.available_slots }}, {{ s.price_per_kwh|default:18 }})">Book Now</button>
-              <button class="btn-secondary" onclick="window.location.href='/station-detail/?id={{ s.id }}'">Details</button>
-              <button class="btn-secondary" onclick="navigateToStation({{ s.latitude }}, {{ s.longitude }})"><i class="fas fa-directions"></i></button>
-              <button class="btn-secondary" onclick="toggleFavourite({{ s.id }}, this)" style="color: #999;"><i class="fas fa-heart"></i></button>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="no-results">
-        <div class="no-results-icon">🔍</div>
-        <h2>No Stations Found</h2>
-        {% if has_location %}
-          <p>Try increasing the search radius or adjusting your filters.<br>
-          <small>Currently searching within {{ current_filters.radius }}km of your location</small></p>
-        {% else %}
-          <p>Try adjusting your search criteria or filters to find charging stations.</p>
-        {% endif %}
-      </div>
-    {% endif %}
   </div>
-  
-  <script>
-    const OBTURO_LOCATION_KEY = 'obturo.location.v1';
-    let obturoLocationLocked = false;
-    let obturoIpAbortController = null;
+</div>
 
-    function saveUserLocation(lat, lon, source) {
-      try {
-        localStorage.setItem(
-          OBTURO_LOCATION_KEY,
-          JSON.stringify({ lat: Number(lat), lon: Number(lon), source: source || 'unknown', ts: Date.now() })
-        );
-      } catch (e) {
-        console.warn('Unable to save location:', e);
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+  var centerLat = 10.0081, centerLon = 76.3126;
+  {% if current_filters.lat and current_filters.lon %}
+    centerLat = {{ current_filters.lat }};
+    centerLon = {{ current_filters.lon }};
+  {% elif stations and stations|length > 0 %}
+    centerLat = {{ stations.0.latitude|default:"10.0081" }};
+    centerLon = {{ stations.0.longitude|default:"76.3126" }};
+  {% endif %}
+
+  var map = L.map('map', { zoomControl: false }).setView([centerLat, centerLon], 13);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  // ── Auto-detect user location on first load with IP fallback ─────────
+  var userLocMarker = null;
+
+  function dropUserMarker(lat, lon) {
+    if (userLocMarker) userLocMarker.remove();
+    userLocMarker = L.circleMarker([lat, lon], {
+      radius: 8, color: '#fff', weight: 2,
+      fillColor: '#3b82f6', fillOpacity: 1
+    }).addTo(map).bindTooltip('You are here', { permanent: false });
+  }
+
+  async function ipLocate(setHidden, autoSubmit) {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const d = await res.json();
+      if (d && d.latitude && d.longitude) {
+        map.setView([d.latitude, d.longitude], 12);
+        dropUserMarker(d.latitude, d.longitude);
+        if (setHidden) {
+          document.getElementById('hidLat').value = d.latitude;
+          document.getElementById('hidLon').value = d.longitude;
+          if (autoSubmit) document.getElementById('hidLat').closest('form').submit();
+        }
       }
+    } catch (e) {
+      console.log('IP locate failed', e);
     }
+  }
 
-    function loadUserLocation() {
-      try {
-        const raw = localStorage.getItem(OBTURO_LOCATION_KEY);
-        if (!raw) return null;
-        const data = JSON.parse(raw);
-        if (typeof data?.lat !== 'number' || typeof data?.lon !== 'number') return null;
-        return data;
-      } catch {
-        return null;
-      }
+  {% if not current_filters.lat and not current_filters.lon %}
+  // Auto-detect location and reload with nearby stations
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      var lat = pos.coords.latitude, lon = pos.coords.longitude;
+      document.getElementById('hidLat').value = lat;
+      document.getElementById('hidLon').value = lon;
+      document.getElementById('hidLat').closest('form').submit();
+    }, function() {
+      // GPS denied — fallback to IP location and auto-submit
+      ipLocate(true, true);
+    }, { enableHighAccuracy: true, timeout: 8000 });
+  } else {
+    ipLocate(true, true);
+  }
+  {% else %}
+  // Already have a position from URL — show dot; still try to place user marker quietly
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      dropUserMarker(pos.coords.latitude, pos.coords.longitude);
+    }, function() {}, { enableHighAccuracy: true, timeout: 8000 });
+  } else {
+    ipLocate(false, false);
+  }
+  {% endif %}
+
+  function gotoMyLocation() {
+    var btn = document.getElementById('locBtn');
+    if (!navigator.geolocation) {
+      btn.classList.add('locating');
+      ipLocate(true, true).finally(() => btn.classList.remove('locating'));
+      return;
     }
+    btn.classList.add('locating');
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      btn.classList.remove('locating');
+      var lat = pos.coords.latitude, lon = pos.coords.longitude;
+      document.getElementById('hidLat').value = lat;
+      document.getElementById('hidLon').value = lon;
+      document.getElementById('hidLat').closest('form').submit();
+    }, function() {
+      // If blocked/denied, fallback to IP-based location and submit
+      ipLocate(true, true).finally(() => btn.classList.remove('locating'));
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  }
 
-    (function initLocationFromUrlOrSaved() {
-      try {
-        const url = new URL(window.location);
-        const lat = url.searchParams.get('lat');
-        const lon = url.searchParams.get('lon');
-        if (lat && lon) {
-          const latNum = Number(lat);
-          const lonNum = Number(lon);
-          if (Number.isFinite(latNum) && Number.isFinite(lonNum)) {
-            saveUserLocation(latNum, lonNum, 'url');
+  function makeIcon(color) {
+    return L.divIcon({
+      className: '',
+      html: '<div style="width:28px;height:28px;background:' + color + ';border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #0f172a;box-shadow:0 2px 8px rgba(0,0,0,.6);"></div>',
+      iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -30]
+    });
+  }
+  var greenIcon = makeIcon('#22c55e');
+  var orangeIcon = makeIcon('#fb923c');
+  var redIcon    = makeIcon('#f87171');
+  var grayIcon   = makeIcon('#64748b');
+
+  var markers = {};
+
+  {% for station in stations %}
+  (function(){
+    var lat = {{ station.latitude|default:"10.0081" }};
+    var lon = {{ station.longitude|default:"76.3126" }};
+    var id = {{ station.id }};
+    var slots = {{ station.available_slots|default:0 }};
+    var total = {{ station.total_slots|default:0 }};
+    var icon = slots > 1 ? greenIcon : (slots === 1 ? orangeIcon : (total > 0 ? redIcon : grayIcon));
+    var sName = "{{ station.name|escapejs }}";
+    var sAddr = "{{ station.address|escapejs|default:'' }}";
+    var sSlotsText = slots + "/" + total + " slots";
+    {% if station.power_kw %}var sPower = "{{ station.power_kw }} kW";{% else %}var sPower = "";{% endif %}
+    var bookUrl = "{% url 'book_station' station.id %}";
+    var detailUrl = "{% url 'station_detail' %}?id={{ station.id }}";
+
+    var m = L.marker([lat, lon], { icon: icon }).addTo(map);
+    m.bindPopup(
+      '<div class="popup-inner">' +
+        '<div class="popup-name">' + sName + '</div>' +
+        '<div class="popup-info">' + (sAddr ? sAddr + ' &bull; ' : '') + sSlotsText + (sPower ? ' &bull; ' + sPower : '') + '</div>' +
+        '<div class="popup-actions">' +
+          '<button class="popup-btn-book" onclick="window.location.href=\'' + bookUrl + '\'"><i class="fa-solid fa-bolt"></i> Book</button>' +
+          '<button class="popup-btn-details" onclick="window.location.href=\'' + detailUrl + '\'"><i class="fa-solid fa-circle-info"></i> Details</button>' +
+        '</div>' +
+      '</div>',
+      { maxWidth: 260 }
+    );
+    markers[id] = m;
+    m.on('click', function() { highlightCard(id); });
+  })();
+  {% endfor %}
+
+  function focusStation(id, lat, lon) {
+    map.setView([lat, lon], 16);
+    if (markers[id]) markers[id].openPopup();
+    highlightCard(id);
+  }
+
+  function highlightCard(id) {
+    document.querySelectorAll('.station-card').forEach(function(c) { c.classList.remove('selected'); });
+    var el = document.getElementById('sc-' + id);
+    if (el) { el.classList.add('selected'); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  }
+
+  // ── Congestion Heatmap ──
+  var heatLayer = null, heatActive = false;
+  // Directly compute intensity: 1.0=full/red, 0.0=available/green
+  var heatPoints = [
+    {% for station in stations %}
+    {% if station.latitude and station.longitude %}
+    [{{ station.latitude }}, {{ station.longitude }},
+      {% if station.available_slots == 0 %}1.0
+      {% elif station.total_slots > 0 and station.available_slots <= station.total_slots|divisibleby:2 %}0.6
+      {% else %}0.1{% endif %}
+    ],
+    {% endif %}
+    {% endfor %}
+  ];
+
+  function buildHeatLayer(){
+    if(!L.heatLayer) return;
+    heatLayer = L.heatLayer(heatPoints, {
+      radius: 40, blur: 30, maxZoom: 15,
+      gradient: { 0.0: '#22c55e', 0.4: '#fbbf24', 0.7: '#f97316', 1.0: '#ef4444' }
+    });
+  }
+
+  function toggleHeatmap(){
+    if(!heatLayer) buildHeatLayer();
+    if(!heatLayer) return;
+    heatActive = !heatActive;
+    const btn = document.getElementById('heatBtn');
+    const legend = document.getElementById('heatLegend');
+    if(heatActive){
+      heatLayer.addTo(map);
+      btn.classList.add('active');
+      btn.innerHTML='<i class="fa fa-fire"></i> Hide Heatmap';
+      legend.classList.add('show');
+    } else {
+      heatLayer.remove();
+      btn.classList.remove('active');
+      btn.innerHTML='<i class="fa fa-fire"></i> Congestion Map';
+      legend.classList.remove('show');
+    }
+  }
+
+  // ════════════════════════════════
+  // RANGE-AWARE FILTER
+  // ════════════════════════════════
+  var RF = {
+    enabled: false,
+    userLat: null,
+    userLon: null,
+    carRangeKm: {{ car_range_km|default:300 }},
+    batteryPct: 75,
+    circle: null,
+    // Realistic real-world factor: 78% of ARAI range
+    REAL_WORLD: 0.78,
+  };
+
+  function haversineKm(lat1, lon1, lat2, lon2) {
+    var R = 6371;
+    var dL = (lat2 - lat1) * Math.PI / 180;
+    var dO = (lon2 - lon1) * Math.PI / 180;
+    var a = Math.sin(dL/2)*Math.sin(dL/2) +
+            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dO/2)*Math.sin(dO/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function reachableKm() {
+    return (RF.batteryPct / 100) * RF.carRangeKm * RF.REAL_WORLD;
+  }
+
+  function toggleRangeFilter() {
+    if (!RF.enabled) {
+      // Need location first
+      if (!RF.userLat) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            RF.userLat = pos.coords.latitude;
+            RF.userLon = pos.coords.longitude;
+            document.getElementById('rfLocWarn').style.display = 'none';
+            enableRangeFilter();
+          },
+          function() {
+            // Fallback: try URL params
+            {% if current_filters.lat and current_filters.lon %}
+            RF.userLat = {{ current_filters.lat }};
+            RF.userLon = {{ current_filters.lon }};
+            enableRangeFilter();
+            {% else %}
+            document.getElementById('rfLocWarn').style.display = 'flex';
+            document.getElementById('rfBody').classList.add('open');
+            document.getElementById('rfToggleRow').classList.add('active');
+            document.getElementById('rfPill').textContent = 'ON';
+            RF.enabled = true;
+            applyRangeFilter();
+            {% endif %}
           }
-          return;
-        }
-
-        const saved = loadUserLocation();
-        if (saved && !url.searchParams.has('autoloc')) {
-          url.searchParams.set('lat', saved.lat);
-          url.searchParams.set('lon', saved.lon);
-          url.searchParams.set('radius', url.searchParams.get('radius') || '15');
-          url.searchParams.set('autoloc', '1');
-          window.location = url;
-        }
-      } catch (e) {
-        console.warn('Location init failed:', e);
+        );
+        return;
       }
+      enableRangeFilter();
+    } else {
+      disableRangeFilter();
+    }
+  }
+
+  function enableRangeFilter() {
+    RF.enabled = true;
+    document.getElementById('rfToggleRow').classList.add('active');
+    document.getElementById('rfPill').textContent = 'ON';
+    document.getElementById('rfBody').classList.add('open');
+    applyRangeFilter();
+  }
+
+  function disableRangeFilter() {
+    RF.enabled = false;
+    document.getElementById('rfToggleRow').classList.remove('active');
+    document.getElementById('rfPill').textContent = 'OFF';
+    document.getElementById('rfBody').classList.remove('open');
+    // Remove circle
+    if (RF.circle) { map.removeLayer(RF.circle); RF.circle = null; }
+    // Restore all cards
+    document.querySelectorAll('.station-card').forEach(function(c) {
+      c.classList.remove('in-range', 'out-of-range');
+    });
+    // Restore all markers to original color
+    {% for station in stations %}
+    (function(){
+      var id = {{ station.id }};
+      var slots = {{ station.available_slots|default:0 }};
+      var total = {{ station.total_slots|default:0 }};
+      if (markers[id]) markers[id].setIcon(slots > 1 ? greenIcon : (slots === 1 ? orangeIcon : (total > 0 ? redIcon : grayIcon)));
     })();
+    {% endfor %}
+    document.getElementById('rfReachKm').textContent = '— km';
+    document.getElementById('rfReachCount').textContent = '— stations';
+  }
 
-    async function getMyLocation() {
-      const btn = event.target;
-      btn.disabled = true;
-      btn.textContent = '📡 Getting GPS fix...';
-      console.log('🔍 Starting high-accuracy GPS (watchPosition)...');
+  function onSliderChange(val) {
+    RF.batteryPct = parseInt(val);
+    document.getElementById('rfPctLabel').textContent = val + '%';
+    // Update slider gradient
+    var slider = document.getElementById('rfSlider');
+    slider.style.background = 'linear-gradient(to right, var(--green) 0%, var(--green) ' + val + '%, var(--border) ' + val + '%)';
+    if (RF.enabled) applyRangeFilter();
+  }
 
-      obturoLocationLocked = false;
-      if (obturoIpAbortController) {
-        try { obturoIpAbortController.abort(); } catch {}
-        obturoIpAbortController = null;
-      }
+  function applyRangeFilter() {
+    var reach = reachableKm();
+    document.getElementById('rfReachKm').textContent = Math.round(reach) + ' km';
 
-      try {
-        const best = await getBestGpsFix({ maxWaitMs: 20000, desiredAccuracyM: 80 });
-        const msg = `Best GPS fix:\nLat: ${best.lat.toFixed(5)}\nLon: ${best.lon.toFixed(5)}\nAccuracy: ${best.accuracyM.toFixed(0)}m\n\nIs this correct?`;
-        if (confirm(msg)) {
-          setStationLocation(best.lat, best.lon, 'gps');
-          return;
-        }
-      } catch (e) {
-        console.warn('GPS fix failed:', e);
-      }
-
-      btn.textContent = '🌐 Using network location...';
-      try {
-        const ipLoc = await getIpLocation();
-        const msg = `Network location (approx):\nCity: ${ipLoc.city || ''}\nLat: ${ipLoc.lat.toFixed(5)}\nLon: ${ipLoc.lon.toFixed(5)}\n\nUse this location?`;
-        if (confirm(msg)) {
-          setStationLocation(ipLoc.lat, ipLoc.lon, 'ip');
-          return;
-        }
-      } catch (e) {
-        console.warn('IP location failed:', e);
-      }
-
-      showLocationPrompt();
-
-      function setStationLocation(lat, lon, source) {
-        obturoLocationLocked = true;
-        if (obturoIpAbortController) {
-          try { obturoIpAbortController.abort(); } catch {}
-          obturoIpAbortController = null;
-        }
-        saveUserLocation(lat, lon, source || 'confirmed');
-        console.log('SETTING LOCATION:', lat, lon, 'source:', source);
-        document.getElementById('lat').value = lat;
-        document.getElementById('lon').value = lon;
-        btn.textContent = 'Searching nearby...';
-        btn.closest('form').submit();
-      }
-
-      function showLocationPrompt() {
-        btn.disabled = false;
-        btn.textContent = 'My Location';
-        const options = [
-          { name: 'Udumbannoor (near Thodupuzha)', lat: 9.9060212, lon: 76.8142565 },
-          { name: 'Thodupuzha (Town)', lat: 9.8976798, lon: 76.7134225 },
-          { name: 'Kochi', lat: 9.9352, lon: 76.6245 },
-          { name: 'Vazhakulam', lat: 9.9437527, lon: 76.6403576 },
-          { name: 'Thiruvananthapuram', lat: 8.5241, lon: 76.9366 }
-        ];
-        const choice = prompt(
-          'Pick your location:\n\n' + options.map((o, i) => `${i + 1}. ${o.name}`).join('\n') + '\n\nEnter number:',
-          '1'
-        );
-        const idx = Number(choice) - 1;
-        if (Number.isFinite(idx) && idx >= 0 && idx < options.length) {
-          setStationLocation(options[idx].lat, options[idx].lon, 'manual');
-        }
-      }
+    // Draw / update circle on map
+    if (RF.userLat && RF.userLon) {
+      if (RF.circle) map.removeLayer(RF.circle);
+      RF.circle = L.circle([RF.userLat, RF.userLon], {
+        radius: reach * 1000,
+        color: '#22c55e', fillColor: '#22c55e',
+        fillOpacity: 0.05, weight: 2, dashArray: '6 4', opacity: 0.7
+      }).addTo(map);
     }
 
-    function getBestGpsFix({ maxWaitMs, desiredAccuracyM }) {
-      return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error('Geolocation not available'));
-          return;
-        }
+    var cards = document.querySelectorAll('.station-card[data-lat]');
+    var reachable = 0;
+    cards.forEach(function(card) {
+      var lat = parseFloat(card.dataset.lat);
+      var lon = parseFloat(card.dataset.lon);
+      var id  = card.id.replace('sc-', '');
+      var badge = document.getElementById('rfb-' + id);
+      var dist = (RF.userLat && RF.userLon)
+        ? haversineKm(RF.userLat, RF.userLon, lat, lon)
+        : 0;
+      var withinRange = (RF.userLat && RF.userLon) ? (dist <= reach) : true;
+      if (withinRange) {
+        card.classList.add('in-range');
+        card.classList.remove('out-of-range');
+        if (badge) { badge.innerHTML = '<i class="fa-solid fa-check"></i> ' + Math.round(dist) + ' km'; }
+        reachable++;
+      } else {
+        card.classList.add('out-of-range');
+        card.classList.remove('in-range');
+        if (badge) { badge.innerHTML = '<i class="fa-solid fa-xmark"></i> ' + Math.round(dist) + ' km'; }
+        // Gray out the map marker
+        if (markers[id]) markers[id].setIcon(grayIcon);
+      }
+    });
 
-        let best = null;
-        let watchId = null;
-        const startedAt = Date.now();
-        const hardTimeout = setTimeout(() => {
-          if (watchId != null) navigator.geolocation.clearWatch(watchId);
-          if (best) resolve(best);
-          else reject(new Error('Timed out waiting for GPS fix'));
-        }, maxWaitMs);
+    document.getElementById('rfReachCount').textContent = reachable + ' reachable';
+    // Update panel count text
+    document.querySelector('.panel-title .count').textContent =
+      RF.enabled ? (reachable + ' reachable') : ('{{ stations|length }} found');
+  }
 
-        watchId = navigator.geolocation.watchPosition(
-          (pos) => {
-            if (obturoLocationLocked) return;
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            const accuracyM = pos.coords.accuracy;
-            const ageMs = Date.now() - startedAt;
-            console.log('GPS update:', lat, lon, 'accuracy:', accuracyM, 'ageMs:', ageMs);
+  // Expose slider init
+  (function(){
+    var s = document.getElementById('rfSlider');
+    if (s) s.style.background = 'linear-gradient(to right, var(--green) 0%, var(--green) 75%, var(--border) 75%)';
+  })();
 
-            if (!Number.isFinite(lat) || !Number.isFinite(lon) || !Number.isFinite(accuracyM)) return;
+  /* ── Crowd-Sourced Reports ── */
+  var reportMarkers = [];
+  var rptColors = { broken:'#f87171', queue:'#fb923c', closed:'#94a3b8', offline:'#fbbf24', clean:'#22c55e' };
+  var rptIcons  = { broken:'🔴', queue:'🟠', closed:'⚫', offline:'⚡', clean:'✅' };
 
-            if (!best || accuracyM < best.accuracyM) {
-              best = { lat, lon, accuracyM };
-              try {
-                const shown = Math.min(Math.round(ageMs / 1000), 99);
-                const accShown = Math.round(accuracyM);
-                const btn = document.querySelector('.search-btn[onclick="getMyLocation()"]') || document.querySelector('.search-btn');
-                if (btn) btn.textContent = `📡 GPS ${accShown}m (${shown}s)`;
-              } catch {}
-            }
+  function makeRptIcon(type) {
+    var color = rptColors[type] || '#94a3b8';
+    var emoji = rptIcons[type] || '⚠️';
+    return L.divIcon({
+      className: '',
+      html: '<div style="background:'+color+';width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:12px;">'+emoji+'</span></div>',
+      iconSize: [26, 26], iconAnchor: [13, 26]
+    });
+  }
 
-            if (best && best.accuracyM <= desiredAccuracyM) {
-              clearTimeout(hardTimeout);
-              if (watchId != null) navigator.geolocation.clearWatch(watchId);
-              resolve(best);
-            }
-          },
-          (err) => {
-            clearTimeout(hardTimeout);
-            if (watchId != null) navigator.geolocation.clearWatch(watchId);
-            reject(err);
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 10000
-          }
-        );
-      });
-    }
-
-    function getIpLocation() {
-      obturoIpAbortController = new AbortController();
-      return fetch('https://ipapi.co/json/', { signal: obturoIpAbortController.signal })
-        .then((r) => {
-          if (!r.ok) throw new Error('IP service error');
-          return r.json();
-        })
-        .then((data) => {
-          const lat = Number(data.latitude);
-          const lon = Number(data.longitude);
-          if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Invalid IP coordinates');
-          return { lat, lon, city: data.city || '' };
+  function loadActiveReports() {
+    fetch('/api/reports/active/')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        // clear old markers
+        reportMarkers.forEach(function(m){ map.removeLayer(m); });
+        reportMarkers = [];
+        (data.reports || []).forEach(function(rpt) {
+          if (!rpt.lat || !rpt.lon) return;
+          var icon = makeRptIcon(rpt.report_type);
+          var label = rpt.report_type.charAt(0).toUpperCase() + rpt.report_type.slice(1);
+          var msg = rpt.note ? (' — ' + rpt.note) : '';
+          var m = L.marker([rpt.lat, rpt.lon], {icon: icon})
+            .addTo(map)
+            .bindPopup('<div class="popup-inner"><b style="color:'+rptColors[rpt.report_type]+'">'+label+'</b>'+msg+'<br><small style="color:var(--muted)">'+rpt.station_name+' &bull; '+rpt.minutes_ago+' min ago</small></div>');
+          reportMarkers.push(m);
         });
+      }).catch(function(){});
+  }
+
+  // load reports on map init (slight delay so map is ready)
+  setTimeout(loadActiveReports, 800);
+
+  /* Report modal */
+  var _rptStationId = null;
+  var _rptType = null;
+
+  function openReportModal(stationId, stationName) {
+    _rptStationId = stationId;
+    _rptType = null;
+    document.querySelectorAll('.rpt-type-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('rptNote').value = '';
+    document.getElementById('rptModalSub').textContent = stationName || 'Station';
+    document.getElementById('rptOverlay').classList.add('open');
+  }
+
+  function closeReportModal() {
+    document.getElementById('rptOverlay').classList.remove('open');
+  }
+
+  function selectRptType(btn, type) {
+    document.querySelectorAll('.rpt-type-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    _rptType = type;
+  }
+
+  function submitReport() {
+    if (!_rptStationId || !_rptType) {
+      alert('Please select a report type.');
+      return;
     }
-    
-    // Booking Modal Functions
-    function openBookingModal(stationId, stationName, availableSlots, pricePerKwh = 18) {
-      if (availableSlots === 0) {
-        alert('This station has no available slots. You will be added to the waitlist if you proceed.');
-      }
-      
-      document.getElementById('bookingModal').style.display = 'block';
-      document.getElementById('modalStationId').value = stationId;
-      document.getElementById('modalStationName').textContent = stationName;
-      document.getElementById('modalAvailableSlots').textContent = availableSlots;
-      document.getElementById('modalStationPricePerKwh').value = pricePerKwh;
-      
-      // Set default times
-      const now = new Date();
-      const in2hours = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-      
-      document.getElementById('startTime').value = now.toISOString().slice(0, 16);
-      document.getElementById('endTime').value = in2hours.toISOString().slice(0, 16);
-      
-      calculateBookingCost();
-    }
-    
-    function calculateBookingCost() {
-      const startTime = document.getElementById('startTime').value;
-      const endTime = document.getElementById('endTime').value;
-      const pricePerKwh = parseFloat(document.getElementById('modalStationPricePerKwh').value) || 18;
-      
-      if (!startTime || !endTime) {
-        document.getElementById('costEstimateBox').style.display = 'none';
-        return;
-      }
-      
-      const start = new Date(startTime);
-      const end = new Date(endTime);
-      const durationHours = (end - start) / (1000 * 60 * 60);
-      
-      if (durationHours <= 0) {
-        document.getElementById('costEstimateBox').style.display = 'none';
-        return;
-      }
-      
-      // Estimate energy: assume 30kW average charging rate
-      const estimatedEnergy = durationHours * 30;
-      const estimatedCost = estimatedEnergy * pricePerKwh;
-      
-      document.getElementById('sessionCost').textContent = `₹${estimatedCost.toFixed(0)}`;
-      document.getElementById('sessionDetails').textContent = `${durationHours.toFixed(1)} hours • ~${estimatedEnergy.toFixed(0)} kWh @ ₹${pricePerKwh}/kWh`;
-      document.getElementById('costEstimateBox').style.display = 'block';
-    }
-    
-    function closeBookingModal() {
-      document.getElementById('bookingModal').style.display = 'none';
-    }
-    
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-      const modal = document.getElementById('bookingModal');
-      if (event.target == modal) {
-        modal.style.display = 'none';
-      }
-    }
-    
-    function submitBooking() {
-      const stationId = document.getElementById('modalStationId').value;
-      const startTime = document.getElementById('startTime').value;
-      const endTime = document.getElementById('endTime').value;
-      
-      if (!startTime || !endTime) {
-        showAlert('error', 'Please select both start and end times');
-        return;
-      }
-      
-      const startDate = new Date(startTime);
-      const endDate = new Date(endTime);
-      
-      if (endDate <= startDate) {
-        showAlert('error', 'End time must be after start time');
-        return;
-      }
-      
-      // Show loading
-      document.getElementById('bookingForm').style.display = 'none';
-      document.getElementById('loadingSpinner').style.display = 'block';
-      
-      // Get JWT token from session/storage
-      const token = '{{ auth_token }}';
-      
-      console.log('Submitting booking with token:', token ? 'Present' : 'Missing');
-      console.log('Station ID:', stationId);
-      console.log('Start:', startDate.toISOString(), 'End:', endDate.toISOString());
-      
-      // Call backend API with JWT token
-      fetch('/api/book/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          station_id: parseInt(stationId),
-          start_time: startDate.toISOString(),
-          end_time: endDate.toISOString(),
-        }),
-      })
-      .then(response => {
-        console.log('Booking response status:', response.status);
-        return response.json().then(data => ({status: response.status, data: data}));
-      })
-      .then(result => {
-        document.getElementById('bookingForm').style.display = 'block';
-        document.getElementById('loadingSpinner').style.display = 'none';
-        
-        console.log('Booking response:', result);
-        
-        if (result.status === 200 || result.status === 201) {
-          if (result.data.booking_id) {
-            showAlert('success', 'Booking confirmed! Booking ID: ' + result.data.booking_id);
-            setTimeout(() => {
-              closeBookingModal();
-              location.reload();
-            }, 2000);
-          } else if (result.data.position) {
-            showAlert('warning', 'Added to waitlist at position: ' + result.data.position);
-            setTimeout(() => {
-              closeBookingModal();
-            }, 2000);
-          } else {
-            showAlert('success', 'Booking created successfully!');
-            setTimeout(() => {
-              closeBookingModal();
-              location.reload();
-            }, 2000);
-          }
+    var note = document.getElementById('rptNote').value.trim();
+    fetch('/api/reports/submit/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},
+      body: JSON.stringify({station_id: _rptStationId, report_type: _rptType, note: note})
+    }).then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (data.report_id) {
+          closeReportModal();
+          loadActiveReports();
+          showToast('Report submitted. Thanks!');
         } else {
-          console.log('Error response:', result.data);
-          showAlert('error', result.data.error || result.data.message || 'Booking failed (Status: ' + result.status + ')');
-          document.getElementById('bookingForm').style.display = 'block';
-          document.getElementById('loadingSpinner').style.display = 'none';
+          alert(data.error || 'Could not submit report. Please log in first.');
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        document.getElementById('bookingForm').style.display = 'block';
-        document.getElementById('loadingSpinner').style.display = 'none';
-        showAlert('error', 'An error occurred: ' + error.message);
-      });
-    }
-    
-    function showAlert(type, message) {
-      const alertDiv = document.getElementById('bookingAlert');
-      alertDiv.className = 'alert alert-' + type;
-      alertDiv.textContent = message;
-      alertDiv.style.display = 'block';
-      
-      if (type === 'success') {
-        setTimeout(() => {
-          alertDiv.style.display = 'none';
-        }, 3000);
-      }
-    }
-    
-    // Favorites functionality
-    function toggleFavourite(stationId, buttonElement) {
-      const token = '{{ auth_token }}';
-      
-      console.log('Toggle favorite - Token:', token ? 'Present' : 'Missing', 'StationId:', stationId);
-      
-      fetch('/api/favourites/toggle/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          station_id: stationId,
-        }),
-      })
-      .then(response => {
-        console.log('Favorites response status:', response.status);
-        return response.json().then(data => ({status: response.status, data: data}));
-      })
-      .then(result => {
-        console.log('Favorites result:', result);
-        if (result.status === 200) {
-          if (result.data.message) {
-            if (result.data.message.includes('Added')) {
-              buttonElement.style.color = '#ff4444';
-              buttonElement.style.fontWeight = 'bold';
-              showAlert('success', 'Added to favorites!');
-            } else if (result.data.message.includes('Removed')) {
-              buttonElement.style.color = '';
-              buttonElement.style.fontWeight = '';
-              showAlert('success', 'Removed from favorites');
-            }
-          } else {
-            showAlert('success', result.data.message || 'Favorite updated!');
-          }
-        } else {
-          showAlert('error', result.data.error || 'Failed to update favorites (Status: ' + result.status + ')');
-        }
-      })
-      .catch(error => {
-        console.error('Favorite error:', error);
-        showAlert('error', 'Error: ' + error.message);
-      });
-    }
-    
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
-      }
-      return cookieValue;
-    }
-    
-    // Manual location entry
-    function setManualLocation() {
-      const lat = document.getElementById('manualLat').value;
-      const lon = document.getElementById('manualLon').value;
-      
-      if (!lat || !lon) {
-        alert('Please enter both latitude and longitude');
-        return;
-      }
-      
-      if (lat < -90 || lat > 90) {
-        alert('Latitude must be between -90 and 90');
-        return;
-      }
-      
-      if (lon < -180 || lon > 180) {
-        alert('Longitude must be between -180 and 180');
-        return;
-      }
-      
-      // Set values and submit form
-      document.getElementById('lat').value = lat;
-      document.getElementById('lon').value = lon;
-      
-      // Submit the form
-      document.querySelector('form').submit();
-    }
-    
-    // Clear browser location cache
-    function clearLocationCache() {
-      if (navigator.permissions && navigator.permissions.query) {
-        navigator.permissions.query({ name: 'geolocation' }).then(result => {
-          if (result.state !== 'granted') {
-            alert('Please grant location permission in your browser settings and try "My Location" again.');
-          }
-        });
-      }
-      
-      // Clear URL params
-      document.getElementById('lat').value = '';
-      document.getElementById('lon').value = '';
-      document.getElementById('manualLat').value = '';
-      document.getElementById('manualLon').value = '';
-      
-      alert('Location cache cleared. Try "My Location" again or enter coordinates manually.');
-    }
-    
-    // Clear location filter and reload page without location params
-    function clearLocationFilter() {
-      // Build URL without location parameters
-      const url = new URL(window.location.href);
-      url.searchParams.delete('lat');
-      url.searchParams.delete('lon');
-      url.searchParams.delete('radius');
-      
-      // Navigate to clean URL
-      window.location.href = url.toString();
-    }
-  </script>
-  
-  <!-- Booking Modal -->
-  <div id="bookingModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">Book Charging Slot</div>
-      
-      <div id="bookingAlert" class="alert" style="display: none;"></div>
-      
-      <div class="modal-body">
-        <div class="station-info">
-          <div><strong>Station:</strong> <span id="modalStationName"></span></div>
-          <div><strong>Available Slots:</strong> <span id="modalAvailableSlots"></span></div>
-        </div>
-        
-        <div id="bookingForm">
-          <div class="form-group">
-            <label for="startTime">Start Time</label>
-            <input type="datetime-local" id="startTime" required onchange="calculateBookingCost()">
-          </div>
-          
-          <div class="form-group">
-            <label for="endTime">End Time</label>
-            <input type="datetime-local" id="endTime" required onchange="calculateBookingCost()">
-          </div>
-          
-          <div id="costEstimateBox" style="display: none; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; padding: 16px; margin-top: 16px;">
-            <div style="text-align: center;">
-              <div style="font-size: 12px; color: #666; margin-bottom: 4px;">Estimated Session Cost</div>
-              <div style="font-size: 24px; font-weight: 700; color: #2e7d32;" id="sessionCost">₹0</div>
-              <div style="font-size: 11px; color: #666; margin-top: 8px;" id="sessionDetails">-</div>
-            </div>
-          </div>
-          
-          <input type="hidden" id="modalStationId">
-          <input type="hidden" id="modalStationPricePerKwh">
-        </div>
-        
-        <div id="loadingSpinner" class="loading-spinner">
-          <div class="spinner"></div>
-          <p style="margin-top: 16px; color: #666;">Processing your booking...</p>
-        </div>
-      </div>
-      
-      <div class="modal-footer">
-        <button class="btn-cancel" onclick="closeBookingModal()">Cancel</button>
-        <button class="btn-confirm" onclick="submitBooking()" id="confirmBookingBtn">Book Now</button>
-      </div>
+      }).catch(function(){ alert('Network error — please try again.'); });
+  }
+
+  function getCookie(name) {
+    var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : '';
+  }
+
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22c55e;color:#0f172a;padding:10px 20px;border-radius:20px;font-weight:700;font-size:13px;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.4);';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3000);
+  }
+</script>
+
+<!-- Report Modal -->
+<div class="rpt-overlay" id="rptOverlay" onclick="if(event.target===this)closeReportModal()">
+  <div class="rpt-box">
+    <div class="rpt-title"><i class="fa-solid fa-triangle-exclamation" style="color:#fb923c;margin-right:8px;"></i>Report an Issue</div>
+    <div class="rpt-sub" id="rptModalSub">Station</div>
+    <div class="rpt-types">
+      <button class="rpt-type-btn rpt-broken" onclick="selectRptType(this,'broken')"><span class="rpt-icon">🔴</span> Charger Broken</button>
+      <button class="rpt-type-btn rpt-queue"  onclick="selectRptType(this,'queue')"><span class="rpt-icon">🟠</span> Long Queue</button>
+      <button class="rpt-type-btn rpt-closed" onclick="selectRptType(this,'closed')"><span class="rpt-icon">⚫</span> Station Closed</button>
+      <button class="rpt-type-btn rpt-offline" onclick="selectRptType(this,'offline')"><span class="rpt-icon">⚡</span> Offline / No Power</button>
+      <button class="rpt-type-btn rpt-clean"  onclick="selectRptType(this,'clean')"><span class="rpt-icon">✅</span> All Clear</button>
+    </div>
+    <textarea class="rpt-note" id="rptNote" rows="2" placeholder="Optional note (e.g. 2 of 4 broken)"></textarea>
+    <div class="rpt-actions">
+      <button class="rpt-cancel" onclick="closeReportModal()">Cancel</button>
+      <button class="rpt-submit" onclick="submitReport()"><i class="fa-solid fa-paper-plane"></i> Submit</button>
     </div>
   </div>
-  
-  <script>
-    function navigateToStation(lat, lng) {
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-      window.open(url, '_blank');
-    }
-  </script>
+</div>
 
-<!-- Include Sidebar Navigation -->
   {% include 'web/includes/sidebar_nav.html' %}
-  
-  <!-- Include Active Bookings Sidebar -->
   {% include 'web/includes/active_bookings_sidebar.html' %}
-  
-  <!-- Include Charging Widget -->
-  {% include 'web/includes/charging_widget.html' %}
 </body>
 </html>

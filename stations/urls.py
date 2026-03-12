@@ -38,6 +38,18 @@ from .views import (
     admin_user_management,
     admin_booking_analytics,
     admin_station_management,
+    # Waitlist
+    join_waitlist,
+    get_waitlist_position,
+    leave_waitlist,
+    # Reports
+    submit_report,
+    get_station_reports,
+    get_all_active_reports,
+    upvote_report,
+    geocode_search,
+    osrm_proxy,
+    tile_proxy,
 )
 
 
@@ -48,6 +60,7 @@ urlpatterns = [
 
     # Booking
     path("book/", create_booking),
+    path("bookings/create/", create_booking),  # Alias for API consistency
     path("bookings/my/", my_bookings),
     path("bookings/<int:booking_id>/", booking_detail),
     path("bookings/active/", active_bookings),
@@ -93,10 +106,30 @@ urlpatterns = [
     path("stations/track-view/", track_station_view),
     path("stations/recently-viewed/", recently_viewed_stations),
 
+    # Waitlist
+    path("waitlist/join/", join_waitlist),
+    path("waitlist/position/", get_waitlist_position),
+    path("waitlist/leave/", leave_waitlist),
+
     # Admin Dashboard
     path("admin/dashboard/stats/", admin_dashboard_stats),
     path("admin/revenue/", admin_revenue_analytics),
     path("admin/users/", admin_user_management),
     path("admin/bookings/analytics/", admin_booking_analytics),
     path("admin/stations/", admin_station_management),
+
+    # Crowd-sourced reports
+    path("reports/submit/", submit_report),
+    path("reports/active/", get_all_active_reports),
+    path("reports/<int:station_id>/", get_station_reports),
+    path("reports/upvote/", upvote_report),
+
+    # Geocoding proxy (Nominatim via server)
+    path("geocode/", geocode_search),
+
+    # OSRM routing proxy
+    path("osrm/", osrm_proxy),
+
+    # Map tile proxy (no auth — tiles are public data)
+    path("tiles/<int:z>/<int:x>/<int:y>/", tile_proxy),
 ]

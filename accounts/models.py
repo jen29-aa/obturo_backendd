@@ -7,6 +7,7 @@ class Car(models.Model):
     max_dc_power_kw = models.FloatField()
     max_ac_power_kw = models.FloatField()
     connector_type = models.CharField(max_length=20)
+    wltp_range_km = models.FloatField(default=300)
 
     def __str__(self):
         return self.name

@@ -1,376 +1,156 @@
+﻿{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Obturo - Profile</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile – Obturo EV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f7fa;
-    }
-    
-    /* Navigation */
-    nav {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      padding: 16px 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    nav .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .nav-brand {
-      font-size: 24px;
-      font-weight: 700;
-    }
-    
-    .nav-links {
-      display: flex;
-      gap: 30px;
-      list-style: none;
-    }
-    
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    
-    .nav-user {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-    }
-    
-    .logout-btn {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 2px solid white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    
-    /* Main container */
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-    
-    h1 {
-      font-size: 36px;
-      color: #1a1a1a;
-      margin-bottom: 40px;
-    }
-    
-    /* Profile card */
-    .profile-card {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      margin-bottom: 30px;
-    }
-    
-    .profile-header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      padding: 40px;
-      text-align: center;
-    }
-    
-    .profile-avatar {
-      font-size: 64px;
-      margin-bottom: 16px;
-    }
-    
-    .profile-name {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    
-    .profile-email {
-      font-size: 14px;
-      opacity: 0.8;
-    }
-    
-    .profile-body {
-      padding: 40px;
-    }
-    
-    .info-section {
-      margin-bottom: 40px;
-    }
-    
-    .info-section h3 {
-      font-size: 18px;
-      color: #1a1a1a;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #e0e0e0;
-    }
-    
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-    }
-    
-    .info-item {
-      background: #f8f9fa;
-      padding: 16px;
-      border-radius: 8px;
-    }
-    
-    .info-label {
-      font-size: 12px;
-      color: #999;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    
-    .info-value {
-      font-size: 16px;
-      color: #333;
-      font-weight: 600;
-    }
-    
-    .car-section {
-      background: linear-gradient(135deg, #10b98115 0%, #05966915 100%);
-      padding: 20px;
-      border-radius: 8px;
-      border-left: 4px solid #10b981;
-    }
-    
-    .car-specs {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-    
-    .car-spec {
-      background: white;
-      padding: 12px;
-      border-radius: 6px;
-      text-align: center;
-    }
-    
-    .car-spec-label {
-      font-size: 11px;
-      color: #999;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    
-    .car-spec-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: #10b981;
-    }
-    
-    .actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    
-    .btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-    
-    .btn-primary {
-      background: #10b981;
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: #059669;
-    }
-    
-    .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
-      border: 1px solid #ddd;
-    }
-    
-    .btn-secondary:hover {
-      background: #e0e0e0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #131720; --card: #1a1f2e; --card2: #222836; --border: #2a3142; --green: #22c55e; --gd: #16a34a; --text: #f1f5f9; --muted: #94a3b8; --subtle: #64748b; }
+    body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    /* ── Glassmorphism ── */
+    .ob-nav { background: rgba(26,31,46,0.5); backdrop-filter: blur(22px) saturate(200%); -webkit-backdrop-filter: blur(22px) saturate(200%); border-bottom: 1px solid rgba(255,255,255,0.07); box-shadow: 0 1px 0 rgba(255,255,255,0.04); position: sticky; top: 0; z-index: 200; transition: background .3s, border-color .3s; }
+    .ob-nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 64px; display: flex; align-items: center; gap: 28px; }
+    .ob-logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; color: #fff; text-decoration: none; flex-shrink: 0; }
+    .ob-logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
+    .ob-nav-links { display: flex; gap: 24px; }
+    .ob-nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .15s; }
+    .ob-nav-links a:hover, .ob-nav-links a.active { color: #fff; }
+    .ob-nav-actions { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+    .ob-btn-out { background: transparent; border: 1px solid var(--border); color: #fff; padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: border-color .15s; }
+    .ob-btn-out:hover { border-color: var(--green); color: var(--green); }
+    .page { max-width: 900px; margin: 0 auto; padding: 32px 32px 60px; }
+    .page-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 28px; }
+
+    /* Profile header card */
+    .profile-hero { background: rgba(26,31,46,0.55); backdrop-filter: blur(22px) saturate(200%); -webkit-backdrop-filter: blur(22px) saturate(200%); border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; padding: 32px; display: flex; gap: 24px; align-items: center; margin-bottom: 28px; box-shadow: 0 8px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07); }
+    .avatar { width: 80px; height: 80px; background: rgba(34,197,94,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; color: var(--green); flex-shrink: 0; }
+    .profile-name-val { font-size: 1.4rem; font-weight: 800; }
+    .profile-email-val { color: var(--muted); font-size: 14px; margin-top: 3px; }
+
+    /* Sections */
+    .section-card { background: rgba(26,31,46,0.5); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px 28px; margin-bottom: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06); }
+    .sec-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 18px; color: #fff; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .info-item { background: rgba(255,255,255,0.04); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 14px 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+    .info-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--subtle); margin-bottom: 5px; }
+    .info-value { font-size: 15px; font-weight: 600; color: #fff; }
+
+    /* Car section */
+    .car-specs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .car-spec-item { background: rgba(255,255,255,0.04); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+    .cs-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--subtle); margin-bottom: 4px; }
+    .cs-value { font-size: 1.15rem; font-weight: 800; color: #fff; }
+
+    /* Slider */
+    .slider-wrap { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+    .slider-hdr { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 600; }
+    .slider-hdr span { color: var(--green); font-weight: 800; }
+    input[type=range] { width: 100%; accent-color: var(--green); }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+    .btn-primary { background: var(--green); border: none; color: #fff; padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer; }
+    .btn-primary:hover { background: var(--gd); }
+    .btn-sec { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: border-color .15s; }
+    .btn-sec:hover { border-color: var(--green); color: #fff; }
+
+    @media (max-width: 700px) { .ob-nav-links { display: none; } .page { padding: 16px; } .profile-hero { flex-direction: column; } }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav>
-    <div class="container">
-      <div class="nav-brand">Obturo</div>
-      <ul class="nav-links">
-        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-        <li><a href="{% url 'stations' %}">Explore</a></li>
-        <li><a href="{% url 'bookings' %}">Bookings</a></li>
-        <li><a href="{% url 'analytics' %}">Analytics</a></li>
-        <li><a href="{% url 'ranking' %}">Ranking</a></li>
-        <li><a href="{% url 'favorites' %}">Favorites</a></li>
-        <li><a href="{% url 'profile' %}">Profile</a></li>
-      </ul>
-      <div class="nav-user">
-        <span>{{ username }}</span>
-        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
-      </div>
+<nav class="ob-nav" id="mainNav">
+  <div class="ob-nav-inner">
+    <a class="ob-logo" href="{% url 'dashboard' %}">
+      <div class="ob-logo-icon"><i class="fa fa-plug"></i></div>Obturo EV
+    </a>
+    <div class="ob-nav-links">
+      <a href="{% url 'dashboard' %}">Dashboard</a>
+      <a href="{% url 'stations' %}">Stations</a>
+      <a href="{% url 'bookings' %}">Bookings</a>
+      <a href="{% url 'profile' %}" class="active">Profile</a>
     </div>
-  </nav>
-  
-  <!-- Main content -->
-  <div class="container">
-    <h1>Profile</h1>
-    
-    <!-- Profile Card -->
-    <div class="profile-card">
-      <div class="profile-header">
-        <div class="profile-avatar"></div>
-        <div class="profile-name">{{ user.get_full_name|default:user.username }}</div>
-        <div class="profile-email">{{ user.email }}</div>
-      </div>
-      
-      <div class="profile-body">
-        <!-- Account Info -->
-        <div class="info-section">
-          <h3>Account Information</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Username</div>
-              <div class="info-value">{{ user.username }}</div>
-            </div>
-            
-            <div class="info-item">
-              <div class="info-label">Email</div>
-              <div class="info-value">{{ user.email|default:"Not set" }}</div>
-            </div>
-            
-            <div class="info-item">
-              <div class="info-label">Member Since</div>
-              <div class="info-value">{{ user.date_joined|date:"M Y" }}</div>
-            </div>
-            
-            <div class="info-item">
-              <div class="info-label">Last Login</div>
-              <div class="info-value">{{ user.last_login|date:"M d, Y"|default:"Never" }}</div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Car Info -->
-        {% if selected_car %}
-          <div class="info-section">
-            <h3>Your Vehicle</h3>
-            <div class="car-section">
-              <div style="font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px;">{{ selected_car.name }}</div>
-              <div class="car-specs">
-                <div class="car-spec">
-                  <div class="car-spec-label">Battery</div>
-                  <div class="car-spec-value">{{ selected_car.battery_capacity_kwh }} kWh</div>
-                </div>
-                <div class="car-spec">
-                  <div class="car-spec-label">DC Power</div>
-                  <div class="car-spec-value">{{ selected_car.max_dc_power_kw }} kW</div>
-                </div>
-                <div class="car-spec">
-                  <div class="car-spec-label">AC Power</div>
-                  <div class="car-spec-value">{{ selected_car.max_ac_power_kw }} kW</div>
-                </div>
-                <div class="car-spec">
-                  <div class="car-spec-label">Connector</div>
-                  <div class="car-spec-value">{{ selected_car.connector_type }}</div>
-                </div>
-              </div>
-              <div style="margin-top: 18px; background: white; padding: 14px; border-radius: 8px; border: 1px dashed #d1d5db;">
-                <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">Recommended Charge Target</div>
-                <p style="color: #4b5563; font-size: 14px; margin-bottom: 10px;">Set your preferred stop target (used to prefill station calculators and cost estimates).</p>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                  <input type="range" id="recChargeSlider" min="50" max="100" value="80" step="1" style="flex: 1;" oninput="updateRecChargeLabel(this.value)">
-                  <div style="min-width: 54px; text-align: center; font-weight: 700; color: #10b981;" id="recChargeLabel">80%</div>
-                </div>
-              </div>
-              <div class="actions">
-                <a href="{% url 'select_car' %}?next=profile" class="btn btn-secondary">Change Car</a>
-              </div>
-            </div>
-          </div>
-        {% else %}
-          <div class="info-section">
-            <h3>Your Vehicle</h3>
-            <p style="color: #666; margin-bottom: 16px;">No vehicle selected yet. Choose a vehicle to get personalized charging recommendations.</p>
-            <a href="{% url 'select_car' %}" class="btn btn-primary">Select a Car</a>
-          </div>
-        {% endif %}
-        
-        <!-- Settings -->
-        <div class="info-section">
-          <h3>Settings</h3>
-          <div class="actions">
-            <button class="btn btn-secondary">Change Password</button>
-            <button class="btn btn-secondary">Notification Preferences</button>
-            <button class="btn btn-secondary">Privacy Settings</button>
-          </div>
-        </div>
-      </div>
+    <div class="ob-nav-actions">
+      <a href="{% url 'logout' %}" class="ob-btn-out">Sign Out</a>
     </div>
   </div>
-  <script>
-  (function initRecCharge() {
-    const prefKey = 'obturo.recCharge';
-    const slider = document.getElementById('recChargeSlider');
-    const label = document.getElementById('recChargeLabel');
-    if (!slider || !label) return;
+</nav>
 
-    try {
-      const saved = JSON.parse(localStorage.getItem(prefKey));
-      if (saved && saved.percent) {
-        slider.value = saved.percent;
-        label.textContent = `${saved.percent}%`;
-      }
-    } catch (e) {
-      console.warn('Unable to read saved charge preference', e);
-    }
+<div class="page">
+  <div class="page-title">Profile</div>
 
-    slider.addEventListener('change', () => {
-      const val = Number(slider.value);
-      localStorage.setItem(prefKey, JSON.stringify({ percent: val, carId: '{{ selected_car.id|default:"" }}' }));
-    });
+  <!-- Profile Hero -->
+  <div class="profile-hero">
+    <div class="avatar">{{ user.username|first|upper }}</div>
+    <div>
+      <div class="profile-name-val">{{ user.get_full_name|default:user.username }}</div>
+      <div class="profile-email-val">{{ user.email|default:"No email set" }}</div>
+    </div>
+  </div>
+
+  <!-- Account Info -->
+  <div class="section-card">
+    <div class="sec-title"><i class="fa fa-user" style="color:var(--green)"></i>&nbsp; Account Information</div>
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">Username</div><div class="info-value">{{ user.username }}</div></div>
+      <div class="info-item"><div class="info-label">Email</div><div class="info-value">{{ user.email|default:"Not set" }}</div></div>
+      <div class="info-item"><div class="info-label">Member Since</div><div class="info-value">{{ user.date_joined|date:"M Y" }}</div></div>
+      <div class="info-item"><div class="info-label">Last Login</div><div class="info-value">{{ user.last_login|date:"M d, Y"|default:"Never" }}</div></div>
+    </div>
+  </div>
+
+  <!-- Vehicle -->
+  <div class="section-card">
+    <div class="sec-title"><i class="fa fa-car-side" style="color:var(--green)"></i>&nbsp; Your Vehicle</div>
+    {% if selected_car %}
+      <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 14px;">{{ selected_car.name }}</div>
+      <div class="car-specs-grid">
+        <div class="car-spec-item"><div class="cs-label">Battery</div><div class="cs-value">{{ selected_car.battery_capacity_kwh }} kWh</div></div>
+        <div class="car-spec-item"><div class="cs-label">DC Power</div><div class="cs-value">{{ selected_car.max_dc_power_kw }} kW</div></div>
+        <div class="car-spec-item"><div class="cs-label">AC Power</div><div class="cs-value">{{ selected_car.max_ac_power_kw }} kW</div></div>
+        <div class="car-spec-item"><div class="cs-label">Connector</div><div class="cs-value">{{ selected_car.connector_type }}</div></div>
+      </div>
+      <div class="slider-wrap">
+        <div class="slider-hdr">Recommended Charge Target <span id="recChargeLabel">80%</span></div>
+        <p style="color:var(--subtle);font-size:13px;margin-bottom:10px;">Used to prefill station calculators and cost estimates.</p>
+        <input type="range" id="recChargeSlider" min="50" max="100" value="80" step="1" oninput="updateRecChargeLabel(this.value)">
+      </div>
+      <div class="btn-row">
+        <a href="{% url 'select_car' %}?next=profile" class="btn-sec">Change Vehicle</a>
+      </div>
+    {% else %}
+      <p style="color:var(--muted);margin-bottom:16px;">No vehicle selected. Choose one to get personalised charging recommendations.</p>
+      <a href="{% url 'select_car' %}" class="btn-primary">Select a Vehicle</a>
+    {% endif %}
+  </div>
+
+  <!-- Settings -->
+  <div class="section-card">
+    <div class="sec-title"><i class="fa fa-gear" style="color:var(--green)"></i>&nbsp; Settings</div>
+    <div class="btn-row">
+      <button class="btn-sec" onclick="alert('Coming soon')">Change Password</button>
+      <button class="btn-sec" onclick="alert('Coming soon')">Notification Preferences</button>
+      <button class="btn-sec" onclick="alert('Coming soon')">Privacy Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const key = 'obturo.recCharge', sl = document.getElementById('recChargeSlider'), lb = document.getElementById('recChargeLabel');
+    if(!sl) return;
+    try{ const s = JSON.parse(localStorage.getItem(key)); if(s?.percent){ sl.value=s.percent; lb.textContent=`${s.percent}%`; } }catch(e){}
+    sl.addEventListener('change', () => localStorage.setItem(key, JSON.stringify({percent:+sl.value,carId:'{{ selected_car.id|default:"" }}'})));
   })();
-
-  function updateRecChargeLabel(val) {
-    const label = document.getElementById('recChargeLabel');
-    if (label) label.textContent = `${val}%`;
-  }
+  function updateRecChargeLabel(v){ const lb=document.getElementById('recChargeLabel'); if(lb) lb.textContent=`${v}%`; }
 </script>
 
-<!-- Include Charging Widget -->
-{% include 'web/includes/charging_widget.html' %}
+  {% include 'web/includes/sidebar_nav.html' %}
+  {% include 'web/includes/active_bookings_sidebar.html' %}
+<script>
+(function(){var nav=document.getElementById('mainNav');if(!nav)return;var lastY=0;function upd(){var y=window.scrollY||window.pageYOffset;if(y<10){nav.style.background='transparent';nav.style.borderBottomColor='transparent';}else if(y<lastY){nav.style.background='rgba(26,31,46,.97)';nav.style.borderBottomColor='var(--border)';}else{nav.style.background='rgba(26,31,46,.6)';nav.style.borderBottomColor='transparent';}lastY=y;}window.addEventListener('scroll',upd,{passive:true});upd();})();
+</script>
 </body>
 </html>

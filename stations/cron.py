@@ -3,8 +3,17 @@ from django.utils import timezone
 from stations.models import ChargingStation, Booking
 import random
 
+
 def update_station_status():
     print("Running charger simulation job...")
+
+    # Clean up expired waitlist entries
+    from stations.models import Waitlist
+    expired = Waitlist.objects.filter(expires_at__isnull=False, expires_at__lt=timezone.now())
+    count = expired.count()
+    if count > 0:
+        print(f"Removing {count} expired waitlist entries...")
+        expired.delete()
 
     stations = ChargingStation.objects.all()
 

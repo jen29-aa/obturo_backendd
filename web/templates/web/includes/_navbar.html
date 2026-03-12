@@ -1,0 +1,170 @@
+<!-- Shared Navbar - Obturo EV new design theme -->
+<nav class="ob-nav">
+  <div class="ob-nav-inner">
+    <a class="ob-logo" href="/home/">
+      <div class="ob-logo-icon"><i class="fa fa-plug"></i></div>
+      Obturo EV
+    </a>
+    <div class="ob-nav-links">
+      <a href="/stations/" {% if active_nav == 'stations' %}class="ob-nav-active"{% endif %}>Find Stations</a>
+      <a href="/bookings/" {% if active_nav == 'bookings' %}class="ob-nav-active"{% endif %}>My Bookings</a>
+      <a href="/ranking/" {% if active_nav == 'ranking' %}class="ob-nav-active"{% endif %}>Ranking</a>
+      <a href="/route-map/" {% if active_nav == 'map' %}class="ob-nav-active"{% endif %}>Route Map</a>
+    </div>
+    <div class="ob-nav-search">
+      <i class="fa fa-search"></i>
+      <input type="text" placeholder="Search locations..." onkeydown="if(event.key==='Enter')window.location.href='/stations/?q='+this.value">
+    </div>
+    <div id="liveSessionBtn" style="display:none">
+      <a id="liveSessionLink" href="/charging-session/" style="display:flex;align-items:center;gap:8px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.45);color:#22c55e;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:800;text-decoration:none;">
+        <span style="display:inline-block;width:8px;height:8px;background:#22c55e;border-radius:50%;animation:livePulse 1.2s ease-in-out infinite;"></span>
+        ⚡ Live Session
+      </a>
+    </div>
+    <style>
+      @keyframes livePulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.6); }
+        50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+      }
+    </style>
+    <script>
+      (function(){
+        function checkSession(){
+          var bid = null;
+          try{ bid = localStorage.getItem('obturo.activeBookingId'); }catch(e){}
+          var btn = document.getElementById('liveSessionBtn');
+          var link = document.getElementById('liveSessionLink');
+          if(bid){ btn.style.display='block'; link.href='/charging-session/?booking='+bid; }
+          else { btn.style.display='none'; }
+        }
+        checkSession();
+        window.addEventListener('storage', checkSession);
+        setInterval(checkSession, 3000);
+      })();
+    </script>
+    <div class="ob-nav-actions">
+      {% if user.is_authenticated %}
+      <a href="/profile/" class="ob-btn-login">
+        <i class="fa fa-user-circle"></i> {{ user.username }}
+      </a>
+      <a href="/logout/" class="ob-btn-login">Sign Out</a>
+      {% else %}
+      <a href="/" class="ob-btn-login">Sign In</a>
+      <a href="/signup/" class="ob-btn-join">Join Now</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+<style>
+  .ob-nav {
+    background: #1a1f2e;
+    border-bottom: 1px solid #2a3142;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  .ob-nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .ob-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #fff;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .ob-logo-icon {
+    width: 30px;
+    height: 30px;
+    background: #22c55e;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #fff;
+  }
+  .ob-nav-links {
+    display: flex;
+    gap: 24px;
+    margin-left: 8px;
+  }
+  .ob-nav-links a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color .15s;
+  }
+  .ob-nav-links a:hover, .ob-nav-links a.ob-nav-active { color: #fff; }
+  .ob-nav-search {
+    flex: 1;
+    max-width: 260px;
+    background: #222836;
+    border: 1px solid #2a3142;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 36px;
+    color: #64748b;
+    font-size: 13px;
+    margin-left: auto;
+  }
+  .ob-nav-search input {
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 13px;
+    width: 100%;
+  }
+  .ob-nav-search input::placeholder { color: #64748b; }
+  .ob-nav-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .ob-btn-login {
+    background: transparent;
+    border: 1px solid #2a3142;
+    color: #fff;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color .15s;
+  }
+  .ob-btn-login:hover { border-color: #22c55e; color: #22c55e; }
+  .ob-btn-join {
+    background: #22c55e;
+    border: none;
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .ob-btn-join:hover { background: #16a34a; }
+  @media (max-width: 768px) {
+    .ob-nav-links { display: none; }
+    .ob-nav-search { display: none; }
+    .ob-nav-inner { gap: 12px; padding: 0 16px; }
+  }
+</style>

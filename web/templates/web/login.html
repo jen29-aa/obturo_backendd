@@ -1,393 +1,166 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Obturo - EV Charging Network</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>Sign In – Obturo EV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-    
-    .container {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      width: 100%;
-      max-width: 450px;
-      overflow: hidden;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #0e1117; --card: #1a1f2e; --card2: #222836; --border: #2a3142; --green: #22c55e; --gd: #16a34a; --text: #f1f5f9; --muted: #94a3b8; --subtle: #64748b; }
+    body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+    .split { display: grid; grid-template-columns: 1fr 440px; min-height: 100vh; max-width: 1100px; margin: 0 auto; gap: 0; align-items: stretch; }
 
-    .header {
-      background: white;
-      color: #1a1a1a;
-      padding: 40px 32px 24px;
-      text-align: center;
-    }
+    /* Left panel */
+    .left-panel { background: linear-gradient(145deg, #0d1b12, #16a34a); display: flex; flex-direction: column; justify-content: center; padding: 60px; }
+    .left-logo { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 48px; }
+    .left-logo-icon { width: 42px; height: 42px; background: var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .left-title { font-size: 2.4rem; font-weight: 900; line-height: 1.1; margin-bottom: 16px; }
+    .left-sub { color: rgba(255,255,255,.65); font-size: 16px; line-height: 1.6; max-width: 380px; margin-bottom: 36px; }
+    .feat-list { display: flex; flex-direction: column; gap: 14px; }
+    .feat-item { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.8); font-size: 15px; }
+    .feat-item i { color: var(--green); font-size: 16px; width: 20px; text-align: center; }
 
-    .header h1 {
-      font-size: 28px;
-      margin-bottom: 8px;
-      font-weight: 700;
-      color: #10b981;
-    }
-
-    .header p {
-      font-size: 15px;
-      color: #666;
-      font-weight: 400;
-    }
-
-    .tabs {
-      display: flex;
-      border-bottom: 2px solid #f0f0f0;
-      background: white;
-      padding: 0 32px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 16px 0;
-      border: none;
-      background: none;
-      cursor: pointer;
-      font-size: 15px;
-      font-weight: 600;
-      color: #999;
-      transition: all 0.3s ease;
-      position: relative;
-      text-align: center;
-    }
-
-    .tab-btn:hover {
-      color: #10b981;
-    }
-
-    .tab-btn.active {
-      color: #10b981;
-    }
-
-    .tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: #10b981;
-      border-radius: 3px 3px 0 0;
-    }
-
-    .tab-content {
-      display: none;
-      padding: 32px;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .error {
-      background-color: #fee;
-      color: #c33;
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      border-left: 4px solid #c33;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px 15px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 15px;
-      transition: all 0.3s ease;
-      font-family: 'Inter', sans-serif;
-      background: #fafafa;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #10b981;
-      background: white;
-      box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
-    }
-
-    input::placeholder {
-      color: #999;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      margin-top: 10px;
-      font-family: 'Inter', sans-serif;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      margin: 20px 0;
-      color: #999;
-      font-size: 13px;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: #e0e0e0;
-    }
-
-    .divider span {
-      padding: 0 12px;
-    }
-
-    .social-buttons {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .social-btn {
-      flex: 1;
-      padding: 10px;
-      background: white;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      color: #333;
-      font-size: 13px;
-    }
-
-    .social-btn:hover {
-      border-color: #10b981;
-      background: #f0fdf4;
-    }
-
-    .social-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    .form-link {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 14px;
-      color: #666;
-    }
-
-    .form-link a {
-      color: #10b981;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .form-link a:hover {
-      text-decoration: underline;
-    }
-
-    .forgot-password {
-      text-align: right;
-      margin-bottom: 20px;
-    }
-
-    .forgot-password a {
-      color: #10b981;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .forgot-password a:hover {
-      text-decoration: underline;
-    }
+    /* Right / form panel */
+    .right-panel { background: rgba(26,31,46,0.75); backdrop-filter: blur(28px) saturate(200%); -webkit-backdrop-filter: blur(28px) saturate(200%); border-left: 1px solid rgba(255,255,255,0.07); box-shadow: -8px 0 48px rgba(0,0,0,0.4); display: flex; flex-direction: column; justify-content: center; padding: 48px 40px; }
+    .form-logo { display: none; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 28px; }
+    .form-logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
+    .tabs { display: flex; margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .tab-btn { flex: 1; padding: 12px; background: none; border: none; color: var(--muted); font-size: 15px; font-weight: 700; cursor: pointer; padding-bottom: 14px; position: relative; transition: color .15s; }
+    .tab-btn.active { color: #fff; }
+    .tab-btn.active::after { content:''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--green); border-radius: 2px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .alert { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: #f87171; border-radius: 10px; padding: 11px 14px; font-size: 14px; margin-bottom: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 7px; }
+    .form-input { width: 100%; background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 10px; padding: 12px 14px; font-size: 15px; outline: none; transition: border-color .15s, box-shadow .15s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+    .form-input:focus { border-color: rgba(34,197,94,0.6); box-shadow: 0 0 0 3px rgba(34,197,94,0.12), inset 0 1px 0 rgba(255,255,255,0.04); }
+    .form-input::placeholder { color: var(--subtle); }
+    .input-icon { position: relative; }
+    .input-icon .form-input { padding-left: 40px; }
+    .input-icon i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--subtle); font-size: 14px; pointer-events: none; }
+    .forgot-row { text-align: right; margin-bottom: 16px; }
+    .forgot-row a { color: var(--green); text-decoration: none; font-size: 13px; font-weight: 600; }
+    .btn-submit { width: 100%; background: var(--green); border: none; color: #fff; padding: 14px; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .15s; }
+    .btn-submit:hover { background: var(--gd); }
+    .or-row { display: flex; align-items: center; gap: 12px; color: var(--subtle); font-size: 13px; margin: 20px 0; }
+    .or-row::before, .or-row::after { content:''; flex:1; height:1px; background: var(--border); }
+    .social-row { display: flex; gap: 10px; }
+    .social-btn { flex: 1; background: rgba(255,255,255,0.04); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.09); color: var(--muted); padding: 11px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: border-color .15s, background .15s; }
+    .social-btn:hover { border-color: rgba(34,197,94,0.4); color: #fff; background: rgba(34,197,94,0.07); }
+    .switch-row { text-align: center; margin-top: 20px; font-size: 14px; color: var(--muted); }
+    .switch-row a { color: var(--green); text-decoration: none; font-weight: 700; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } .left-panel { display: none; } .right-panel { min-height: 100vh; padding: 40px 24px; } .form-logo { display: flex; } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Obturo</h1>
-      <p>Your EV Charging Network</p>
+<div class="split">
+  <!-- Left decorative panel -->
+  <div class="left-panel">
+    <div class="left-logo">
+      <div class="left-logo-icon"><i class="fa fa-plug"></i></div>
+      Obturo EV
     </div>
-
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
-      <button class="tab-btn" onclick="switchTab('signup')">Create Account</button>
-    </div>
-
-    <!-- Login Tab -->
-    <div id="login" class="tab-content active">
-      {% if error and not signup_mode %}
-        <div class="error">{{ error }}</div>
-      {% endif %}
-      
-      <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
-        <div class="form-group">
-          <label for="login-username">Username or Email</label>
-          <input id="login-username" name="username" placeholder="Enter your username or email" required type="text">
-        </div>
-        <div class="form-group">
-          <label for="login-password">Password</label>
-          <input id="login-password" name="password" type="password" placeholder="Enter your password" required>
-        </div>
-        
-        <div class="forgot-password">
-          <a href="#">Forgot your password?</a>
-        </div>
-        
-        <button type="submit">Sign In</button>
-      </form>
-
-      <div class="divider"><span>or</span></div>
-      
-      <div class="social-buttons">
-        <button type="button" class="social-btn" onclick="alert('Google OAuth not configured')">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-        </button>
-        <button type="button" class="social-btn" onclick="alert('Facebook OAuth not configured')">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-        </button>
-      </div>
-
-      <div class="form-link">
-        Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create one</a>
-      </div>
-    </div>
-
-    <!-- Signup Tab -->
-    <div id="signup" class="tab-content">
-      {% if error and signup_mode %}
-        <div class="error">{{ error }}</div>
-      {% endif %}
-      
-      <form method="post" action="{% url 'signup' %}">
-        {% csrf_token %}
-        <div class="form-group">
-          <label for="signup-firstname">First Name</label>
-          <input id="signup-firstname" name="username" placeholder="Enter your first name" required type="text">
-        </div>
-        <div class="form-group">
-          <label for="signup-lastname">Last Name</label>
-          <input id="signup-lastname" name="last_name" placeholder="Enter your last name" type="text">
-        </div>
-        <div class="form-group">
-          <label for="signup-email">Email Address</label>
-          <input id="signup-email" name="email" type="email" placeholder="Enter your email" required>
-        </div>
-        <div class="form-group">
-          <label for="signup-password">Password</label>
-          <input id="signup-password" name="password" type="password" placeholder="Create a password" required>
-        </div>
-        <button type="submit">Create Account</button>
-      </form>
-
-      <div class="divider"><span>or</span></div>
-      
-      <div class="social-buttons">
-        <button type="button" class="social-btn" onclick="alert('Google OAuth not configured')">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-        </button>
-        <button type="button" class="social-btn" onclick="alert('Facebook OAuth not configured')">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-        </button>
-      </div>
-
-      <div class="form-link">
-        Already have an account? <a href="#" onclick="switchTab('login'); return false;">Sign in</a>
-      </div>
+    <h1 class="left-title">Power your EV journey</h1>
+    <p class="left-sub">Find fast chargers, book slots instantly, and track your charging sessions — all in one place.</p>
+    <div class="feat-list">
+      <div class="feat-item"><i class="fa fa-map-location-dot"></i> 500+ charging stations across the country</div>
+      <div class="feat-item"><i class="fa fa-calendar-check"></i> Real-time slot availability & instant booking</div>
+      <div class="feat-item"><i class="fa fa-chart-line"></i> Analytics to track energy usage & cost</div>
+      <div class="feat-item"><i class="fa fa-star"></i> Smart TOPSIS-based station ranking</div>
     </div>
   </div>
 
-  <script>
-    function switchTab(tabName) {
-      // Hide all tabs
-      document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
+  <!-- Right form panel -->
+  <div class="right-panel">
+    <div class="form-logo">
+      <div class="form-logo-icon"><i class="fa fa-plug"></i></div>
+      Obturo EV
+    </div>
 
-      // Show selected tab
-      document.getElementById(tabName).classList.add('active');
-      
-      // Update active button
-      const buttons = document.querySelectorAll('.tab-btn');
-      buttons.forEach(btn => {
-        if ((tabName === 'login' && btn.textContent.includes('Sign In')) ||
-            (tabName === 'signup' && btn.textContent.includes('Create'))) {
-          btn.classList.add('active');
-        }
-      });
-    }
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-login-btn" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" id="tab-signup-btn" onclick="switchTab('signup')">Create Account</button>
+    </div>
 
-    // Check if there's an error and show appropriate tab
-    {% if error %}
-      {% if 'email' in error or 'password_confirm' in error or 'already' in error %}
-        window.addEventListener('DOMContentLoaded', () => {
-          switchTab('signup');
-        });
-      {% else %}
-        window.addEventListener('DOMContentLoaded', () => {
-          switchTab('login');
-        });
-      {% endif %}
-    {% endif %}
-  </script>
+    <!-- Login -->
+    <div id="login" class="tab-content active">
+      {% if error and not signup_mode %}<div class="alert"><i class="fa fa-circle-exclamation"></i> {{ error }}</div>{% endif %}
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="input-icon">
+            <i class="fa fa-user"></i>
+            <input class="form-input" name="username" placeholder="Enter your username" required type="text">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-icon">
+            <i class="fa fa-lock"></i>
+            <input class="form-input" name="password" type="password" placeholder="Enter your password" required>
+          </div>
+        </div>
+        <div class="forgot-row"><a href="#">Forgot password?</a></div>
+        <button class="btn-submit" type="submit"><i class="fa fa-right-to-bracket"></i> Sign In</button>
+      </form>
+      <div class="or-row">or</div>
+      <div class="social-row">
+        <button class="social-btn" onclick="alert('Google OAuth not configured')"><i class="fab fa-google"></i> Google</button>
+        <button class="social-btn" onclick="alert('Facebook OAuth not configured')"><i class="fab fa-facebook-f"></i> Facebook</button>
+      </div>
+      <div class="switch-row">Don't have an account? <a href="#" onclick="switchTab('signup');return false;">Create one</a></div>
+    </div>
+
+    <!-- Signup -->
+    <div id="signup" class="tab-content">
+      {% if error and signup_mode %}<div class="alert"><i class="fa fa-circle-exclamation"></i> {{ error }}</div>{% endif %}
+      <form method="post" action="{% url 'signup' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="input-icon">
+            <i class="fa fa-user"></i>
+            <input class="form-input" name="username" placeholder="Choose a username" required type="text">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <div class="input-icon">
+            <i class="fa fa-envelope"></i>
+            <input class="form-input" name="email" type="email" placeholder="Enter your email" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-icon">
+            <i class="fa fa-lock"></i>
+            <input class="form-input" name="password" type="password" placeholder="Create a secure password" required>
+          </div>
+        </div>
+        <button class="btn-submit" type="submit"><i class="fa fa-user-plus"></i> Create Account</button>
+      </form>
+      <div class="or-row">or</div>
+      <div class="social-row">
+        <button class="social-btn" onclick="alert('Google OAuth not configured')"><i class="fab fa-google"></i> Google</button>
+        <button class="social-btn" onclick="alert('Facebook OAuth not configured')"><i class="fab fa-facebook-f"></i> Facebook</button>
+      </div>
+      <div class="switch-row">Already have an account? <a href="#" onclick="switchTab('login');return false;">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchTab(t){
+    ['login','signup'].forEach(n=>{
+      document.getElementById(n).classList.toggle('active', n===t);
+      document.getElementById('tab-'+n+'-btn').classList.toggle('active', n===t);
+    });
+  }
+  {% if signup_mode %}window.addEventListener('DOMContentLoaded',()=>switchTab('signup'));{% endif %}
+</script>
 </body>
 </html>

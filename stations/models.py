@@ -144,7 +144,7 @@ class PeerBooking(models.Model):
 
 
 # ====================================
-# 5. STATION RATINGS
+# 5. STATION RATINGS & REVIEWS
 # ====================================
 class StationRating(models.Model):
     user = models.ForeignKey(
@@ -158,13 +158,17 @@ class StationRating(models.Model):
         related_name="ratings"
     )
     rating = models.IntegerField()  # 1–5
+    review = models.TextField(null=True, blank=True)  # Text review
+    helpful_count = models.IntegerField(default=0)  # Helpful votes
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ("user", "station")
+        ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.station} - {self.rating}"
+        return f"{self.station} - {self.rating} by {self.user}"
 
 
 # ====================================
@@ -189,6 +193,7 @@ class UserPenalty(models.Model):
 # ====================================
 # 7. WAITLIST (SMART QUEUE)
 # ====================================
+
 class Waitlist(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="waitlist_entries"
@@ -196,15 +201,14 @@ class Waitlist(models.Model):
     station = models.ForeignKey(
         ChargingStation, on_delete=models.CASCADE, related_name="waitlist_entries"
     )
-
-    # Position in the queue (IMPORTANT → this column caused your error!)
+    # Position in the queue
     position = models.IntegerField(default=1)
-
     # Whether the user already got a “slot available” notification
     notified = models.BooleanField(default=False)
-
     # Helps ordering correctly
     created_at = models.DateTimeField(auto_now_add=True)
+    # When this waitlist entry should expire (auto-remove)
+    expires_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ("user", "station")
@@ -236,3 +240,30 @@ class RecentlyViewedStation(models.Model):
 
     def __str__(self):
         return f"{self.user.username} viewed {self.station.name}"
+
+
+# ====================================
+# 9. CROWD-SOURCED STATION REPORTS
+# ====================================
+class StationReport(models.Model):
+    REPORT_TYPES = [
+        ('broken',  'Charger Broken'),
+        ('queue',   'Long Queue'),
+        ('closed',  'Station Closed'),
+        ('offline', 'Offline / No Power'),
+        ('clean',   'All Clear'),
+    ]
+
+    station  = models.ForeignKey(ChargingStation, on_delete=models.CASCADE, related_name='reports')
+    user     = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
+    note     = models.CharField(max_length=200, blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    expires_at  = models.DateTimeField()
+    upvotes  = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.report_type} @ {self.station.name}"

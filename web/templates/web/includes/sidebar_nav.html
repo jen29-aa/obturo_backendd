@@ -1,13 +1,15 @@
-<!-- Sidebar Navigation (Hamburger Menu) -->
+﻿<!-- Obturo Sidebar Navigation (Hamburger) -->
 <style>
-  #sidebarMenuToggle {
+  #osNavToggle {
     position: fixed;
-    top: 20px;
-    left: 20px;
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border: none;
+    top: 12px;
+    left: 12px;
+    width: 42px;
+    height: 42px;
+    background: rgba(26,31,46,0.75);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.1);
     border-radius: 10px;
     cursor: pointer;
     z-index: 10001;
@@ -16,199 +18,398 @@
     justify-content: center;
     align-items: center;
     gap: 5px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    transition: all 0.3s;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,0.07);
+    transition: background .15s, border-color .15s, transform .15s;
   }
-  
-  #sidebarMenuToggle:hover {
+  #osNavToggle:hover {
+    background: rgba(34,197,94,0.12);
+    border-color: rgba(34,197,94,0.4);
     transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
   }
-  
-  #sidebarMenuToggle span {
-    width: 24px;
-    height: 3px;
-    background: white;
+  #osNavToggle .bar {
+    width: 18px;
+    height: 2px;
+    background: var(--text, #f1f5f9);
     border-radius: 2px;
-    transition: all 0.3s;
+    transition: transform .25s, opacity .25s, width .25s;
+    transform-origin: center;
   }
-  
-  #sidebarMenuToggle.active span:nth-child(1) {
-    transform: rotate(45deg) translate(7px, 7px);
-  }
-  
-  #sidebarMenuToggle.active span:nth-child(2) {
-    opacity: 0;
-  }
-  
-  #sidebarMenuToggle.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(7px, -7px);
-  }
-  
-  #obturoSidebarNav {
-    position: fixed;
-    top: 0;
-    left: -320px;
-    width: 320px;
-    height: 100vh;
-    background: white;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+  #osNavToggle.open .bar:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+  #osNavToggle.open .bar:nth-child(2) { opacity: 0; width: 0; }
+  #osNavToggle.open .bar:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+  #osNavOverlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(2px);
     z-index: 10000;
-    transition: left 0.3s ease;
-    overflow-y: auto;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
   }
-  
-  #obturoSidebarNav.active {
-    left: 0;
-  }
-  
-  #obturoSidebarOverlay {
+  #osNavOverlay.active { opacity: 1; pointer-events: auto; }
+
+  #osNavPanel {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
-    display: none;
-    transition: opacity 0.3s;
+    top: 0; left: -300px;
+    width: 280px; height: 100vh;
+    background: rgba(26,31,46,0.82);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    border-right: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 8px 0 48px rgba(0,0,0,.6), inset -1px 0 0 rgba(255,255,255,0.04);
+    z-index: 10001;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+    transition: left .28s cubic-bezier(.4,0,.2,1);
+    font-family: "Inter","Segoe UI",sans-serif;
   }
-  
-  #obturoSidebarOverlay.active {
-    display: block;
+  #osNavPanel.active { left: 0; }
+
+  .osn-header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border, #2a3142);
+    background: linear-gradient(135deg, rgba(34,197,94,.1) 0%, rgba(22,163,74,.04) 100%);
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
   }
-  
-  .obturo-sidebar-header {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    padding: 30px 20px;
-    font-size: 24px;
-    font-weight: 700;
+  .osn-header-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #0f172a;
+    box-shadow: 0 3px 10px rgba(34,197,94,.3);
+    flex-shrink: 0;
   }
-  
-  .obturo-sidebar-menu {
-    padding: 20px 0;
+  .osn-header-title { font-size: 17px; font-weight: 800; color: var(--text, #f1f5f9); }
+  .osn-header-sub { font-size: 11px; color: var(--subtle, #64748b); margin-top: 1px; }
+
+  .osn-user {
+    margin: 14px 14px 4px;
+    background: var(--card2, #222836);
+    border: 1px solid var(--border, #2a3142);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
   }
-  
-  .obturo-sidebar-menu-item {
-    display: flex;
-    align-items: center;
-    padding: 16px 24px;
-    color: #333;
+  .osn-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #0f172a; font-weight: 700; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .osn-username { font-size: 13px; font-weight: 600; color: var(--text, #f1f5f9); }
+  .osn-role { font-size: 11px; color: var(--subtle, #64748b); }
+
+  .osn-section { padding: 10px 10px 0; }
+  .osn-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--subtle, #64748b); padding: 4px 8px 8px; }
+  .osn-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    color: var(--muted, #94a3b8);
     text-decoration: none;
-    font-weight: 500;
-    font-size: 15px;
-    transition: all 0.2s;
-    border-left: 4px solid transparent;
+    transition: background .12s, color .12s;
+    margin-bottom: 2px;
   }
-  
-  .obturo-sidebar-menu-item:hover {
-    background: #ecfdf5;
-    border-left-color: #10b981;
-    color: #059669;
+  .osn-item:hover { background: var(--card2, #222836); color: var(--text, #f1f5f9); }
+  .osn-item.active { background: rgba(34,197,94,.12); color: var(--green, #22c55e); font-weight: 600; }
+  .osn-item i { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
+  .osn-item .osn-item-badge {
+    margin-left: auto; font-size: 10px; font-weight: 700;
+    background: rgba(34,197,94,.15); color: var(--green, #22c55e);
+    border: 1px solid rgba(34,197,94,.2); border-radius: 10px;
+    padding: 2px 7px;
   }
-  
-  .obturo-sidebar-menu-item.active {
-    background: #d1fae5;
-    border-left-color: #10b981;
-    color: #059669;
-    font-weight: 600;
+
+  .osn-divider { height: 1px; background: var(--border, #2a3142); margin: 10px 14px; }
+
+  .osn-footer { margin-top: auto; padding: 14px 10px 20px; }
+  .osn-logout {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    color: var(--red, #f87171); text-decoration: none;
+    transition: background .12s;
   }
-  
-  .obturo-sidebar-menu-icon {
-    font-size: 20px;
-    margin-right: 12px;
-    width: 24px;
-    text-align: center;
-  }
+  .osn-logout:hover { background: rgba(248,113,113,.08); }
+  .osn-logout i { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
 </style>
 
-<button id="sidebarMenuToggle" onclick="obturoToggleSidebar()">
-  <span></span>
-  <span></span>
-  <span></span>
+<!-- Toggle Button -->
+<button id="osNavToggle" onclick="osnToggle()" aria-label="Open menu">
+  <span class="bar"></span>
+  <span class="bar"></span>
+  <span class="bar"></span>
 </button>
 
-<div id="obturoSidebarOverlay" onclick="obturoCloseSidebar()"></div>
+<!-- Overlay -->
+<div id="osNavOverlay" onclick="osnClose()"></div>
 
-<div id="obturoSidebarNav">
-  <div class="obturo-sidebar-header">
-    Obturo Menu
+<!-- Panel -->
+<div id="osNavPanel">
+  <div class="osn-header">
+    <div class="osn-header-icon"><i class="fa-solid fa-bolt"></i></div>
+    <div>
+      <div class="osn-header-title">Obturo EV</div>
+      <div class="osn-header-sub">Charging Network</div>
+    </div>
   </div>
-  
-  <div class="obturo-sidebar-menu">
-    <a href="{% url 'home' %}" class="obturo-sidebar-menu-item">
-      <span class="obturo-sidebar-menu-icon"></span>
-      Home
-    </a>
-    <a href="{% url 'route_map' %}" class="obturo-sidebar-menu-item">
-      <span class="obturo-sidebar-menu-icon"></span>
-      Plan Journey
-    </a>
-    <a href="{% url 'stations' %}" class="obturo-sidebar-menu-item">
-      <span class="obturo-sidebar-menu-icon"></span>
-      Find Stations
-    </a>
-    <a href="{% url 'bookings' %}" class="obturo-sidebar-menu-item">
-      <span class="obturo-sidebar-menu-icon"></span>
-      My Bookings
-    </a>
-    <a href="{% url 'analytics' %}" class="obturo-sidebar-menu-item">
-      <span class="obturo-sidebar-menu-icon"></span>
-      Analytics
-    </a>
-    <a href="{% url 'favorites' %}" class="obturo-sidebar-menu-item">
-      <span class="obturo-sidebar-menu-icon"></span>
-      Favorites
-    </a>
-    <a href="{% url 'profile' %}" class="obturo-sidebar-menu-item">
-      <span class="obturo-sidebar-menu-icon"></span>
-      Profile
-    </a>
-    {% if request.user.is_staff %}
-    <a href="{% url 'admin_dashboard' %}" class="obturo-sidebar-menu-item" style="background: #f0f7ff; border-left: 4px solid #2196f3; color: #1976d2; margin-top: 12px;">
-      <span class="obturo-sidebar-menu-icon">👨‍💼</span>
-      Admin Dashboard
-    </a>
-    {% endif %}
-    <a href="{% url 'logout' %}" class="obturo-sidebar-menu-item" style="color: #dc3545; border-top: 1px solid #e0e0e0; margin-top: 12px;">
-      <span class="obturo-sidebar-menu-icon"></span>
-      Logout
-    </a>
+
+  {% if user.is_authenticated %}
+  <div class="osn-user">
+    <div class="osn-avatar">{{ user.username|first|upper|default:"U" }}</div>
+    <div>
+      <div class="osn-username">{{ user.username|default:"User" }}</div>
+      <div class="osn-role">Pro Member</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="osn-section">
+    <div class="osn-section-label">Navigation</div>
+    <a href="{% url 'home' %}"        class="osn-item" data-path="/"><i class="fa-solid fa-house"></i> Home</a>
+    <a href="{% url 'stations' %}"    class="osn-item" data-path="/stations"><i class="fa-solid fa-map-location-dot"></i> Explore Stations</a>
+    <a href="{% url 'route_map' %}"   class="osn-item" data-path="/route-map"><i class="fa-solid fa-route"></i> Route Planner</a>
+    <a href="{% url 'bookings' %}"    class="osn-item" data-path="/bookings"><i class="fa-solid fa-calendar-check"></i> My Bookings</a>
+  </div>
+
+  <div class="osn-section" style="padding-top:6px;">
+    <div class="osn-section-label">Account</div>
+    <a href="{% url 'profile' %}"     class="osn-item" data-path="/profile"><i class="fa-solid fa-user"></i> Profile</a>
+    <a href="{% url 'favorites' %}"   class="osn-item" data-path="/favorites"><i class="fa-solid fa-star"></i> Favorites</a>
+    <a href="{% url 'peer_chargers' %}" class="osn-item" data-path="/peer-chargers"><i class="fa-solid fa-users"></i> Peer Chargers</a>
+    <a href="{% url 'ranking' %}"     class="osn-item" data-path="/ranking"><i class="fa-solid fa-trophy"></i> Ranking</a>
+    <a href="{% url 'analytics' %}"   class="osn-item" data-path="/analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+  </div>
+
+  {% if request.user.is_staff %}
+  <div class="osn-section" style="padding-top:6px;">
+    <div class="osn-section-label">Admin</div>
+    <a href="{% url 'admin_dashboard' %}" class="osn-item" data-path="/admin-dashboard"><i class="fa-solid fa-shield-halved"></i> Admin Dashboard <span class="osn-item-badge">Staff</span></a>
+  </div>
+  {% endif %}
+
+  <div class="osn-divider"></div>
+  <div class="osn-footer">
+    <a href="{% url 'logout' %}" class="osn-logout"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
   </div>
 </div>
 
 <script>
-  function obturoToggleSidebar() {
-    const sidebar = document.querySelector('#obturoSidebarNav');
-    const overlay = document.querySelector('#obturoSidebarOverlay');
-    const toggle = document.querySelector('#sidebarMenuToggle');
-    
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
-    toggle.classList.toggle('active');
+  function osnToggle() {
+    var btn   = document.getElementById('osNavToggle');
+    var panel = document.getElementById('osNavPanel');
+    var ov    = document.getElementById('osNavOverlay');
+    var open  = panel.classList.contains('active');
+    if (open) { osnClose(); }
+    else { panel.classList.add('active'); ov.classList.add('active'); btn.classList.add('open'); }
   }
-  
-  function obturoCloseSidebar() {
-    const sidebar = document.querySelector('#obturoSidebarNav');
-    const overlay = document.querySelector('#obturoSidebarOverlay');
-    const toggle = document.querySelector('#sidebarMenuToggle');
-    
-    sidebar.classList.remove('active');
-    overlay.classList.remove('active');
-    toggle.classList.remove('active');
+  function osnClose() {
+    document.getElementById('osNavPanel').classList.remove('active');
+    document.getElementById('osNavOverlay').classList.remove('active');
+    document.getElementById('osNavToggle').classList.remove('open');
   }
-  
-  // Highlight current page
   document.addEventListener('DOMContentLoaded', function() {
-    const currentPath = window.location.pathname;
-    const menuItems = document.querySelectorAll('.obturo-sidebar-menu-item');
-    
-    menuItems.forEach(item => {
-      const href = item.getAttribute('href');
-      if (href && currentPath.includes(href.split('/')[1])) {
-        item.classList.add('active');
-      }
+    var path = window.location.pathname;
+    document.querySelectorAll('.osn-item[data-path]').forEach(function(el) {
+      var dp = el.getAttribute('data-path');
+      if (dp !== '/' && path.startsWith(dp)) el.classList.add('active');
+      else if (dp === '/' && path === '/') el.classList.add('active');
     });
   });
+</script>
+
+<!-- ═══ GLOBAL OBTURO ANIMATIONS ═══ -->
+<style>
+  /* Scroll-reveal base */
+  .ob-anim {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1);
+  }
+  .ob-anim.ob-slide-left  { transform: translateX(-32px); }
+  .ob-anim.ob-slide-right { transform: translateX(32px); }
+  .ob-anim.ob-scale       { transform: scale(.94); }
+  .ob-anim.ob-visible     { opacity: 1; transform: none; }
+  .ob-d1 { transition-delay: .05s; } .ob-d2 { transition-delay: .12s; }
+  .ob-d3 { transition-delay: .19s; } .ob-d4 { transition-delay: .26s; }
+  .ob-d5 { transition-delay: .33s; } .ob-d6 { transition-delay: .40s; }
+
+  /* Page-transition overlay */
+  #obPageVeil {
+    position: fixed; inset: 0; z-index: 99999;
+    background: #131720;
+    pointer-events: none;
+    transition: opacity .4s ease;
+  }
+  #obPageVeil.hidden { opacity: 0; }
+
+  /* Ripple on buttons/cards */
+  .ob-ripple { position: relative; overflow: hidden; }
+  .ob-ripple-circle {
+    position: absolute; border-radius: 50%;
+    background: rgba(34,197,94,.25);
+    transform: scale(0); animation: obRippleAnim .55s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes obRippleAnim { to { transform: scale(4); opacity: 0; } }
+
+  /* Gradient glow for cards on hover */
+  .ob-glow-hover { transition: box-shadow .3s; }
+  .ob-glow-hover:hover { box-shadow: 0 0 0 1px rgba(34,197,94,.35), 0 8px 32px rgba(34,197,94,.12); }
+
+  /* Floating animation */
+  .ob-float { animation: obFloat 4s ease-in-out infinite; }
+  @keyframes obFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+  /* Shimmer skeleton */
+  .ob-shimmer {
+    background: linear-gradient(90deg,#1a1f2e 25%,#222836 50%,#1a1f2e 75%);
+    background-size: 200% 100%;
+    animation: obShimmer 1.4s infinite;
+  }
+  @keyframes obShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* Pulse dot */
+  .ob-pulse-dot {
+    display: inline-block; width: 8px; height: 8px;
+    background: #22c55e; border-radius: 50%;
+    animation: obPulseDot 2s ease-in-out infinite;
+  }
+  @keyframes obPulseDot {
+    0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.5); }
+    50%      { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  }
+
+  /* Number ticker */
+  .ob-ticker { font-variant-numeric: tabular-nums; }
+
+  /* Neon underline on section headers */
+  .ob-neon-line {
+    display: inline-block; position: relative;
+  }
+  .ob-neon-line::after {
+    content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg,#22c55e,#4ade80,#22c55e);
+    background-size: 200% 100%; animation: obNeonSlide 2s linear infinite;
+  }
+  @keyframes obNeonSlide { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+<script>
+(function() {
+  // ── Page-transition veil ──
+  var veil = document.createElement('div');
+  veil.id = 'obPageVeil';
+  document.body.appendChild(veil);
+  requestAnimationFrame(function() { requestAnimationFrame(function() { veil.classList.add('hidden'); }); });
+
+  document.addEventListener('click', function(e) {
+    var a = e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript') || a.target === '_blank') return;
+    if (a.closest('#osNavPanel') && href === window.location.pathname) return;
+    e.preventDefault();
+    veil.classList.remove('hidden');
+    setTimeout(function() { window.location.href = href; }, 320);
+  });
+
+  // ── Scroll-reveal IntersectionObserver ──
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(en) {
+      if (en.isIntersecting) {
+        var el = en.target;
+        if (el.getAttribute('data-ob-auto')) {
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+        } else {
+          el.classList.add('ob-visible');
+        }
+        io.unobserve(el);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  function initAnims() {
+    // Explicit .ob-anim elements
+    document.querySelectorAll('.ob-anim').forEach(function(el) {
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight - 40) { el.classList.add('ob-visible'); }
+      else { io.observe(el); }
+    });
+
+    // Auto-animate common page elements on any page (cards, rows, headings)
+    var autoSels = [
+      '.card', '.bk-row', '.bk-wrap', '.bk-wrap', '.stat-card',
+      '.step-card', '.feature-card', '.hcard', '.ranking-section',
+      '.analytics-card', '.fav-card', '.peer-card', '.profile-section',
+      '.detail-panel', '.session-card', '.dashboard-card',
+      '.page-header', '.page-heading',
+    ];
+    var allAuto = document.querySelectorAll(autoSels.join(','));
+    var delayIdx = {};
+    allAuto.forEach(function(el) {
+      if (el.classList.contains('ob-anim') || el.classList.contains('ob-no-anim')) return;
+      // Stagger siblings by getting index within parent
+      var parent = el.parentElement;
+      if (!parent) return;
+      var idx = (delayIdx[parent] = (delayIdx[parent] || 0) + 1);
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(22px)';
+      el.style.transition = 'opacity .6s cubic-bezier(.22,1,.36,1) ' + Math.min((idx - 1) * 0.07, 0.4) + 's, transform .6s cubic-bezier(.22,1,.36,1) ' + Math.min((idx - 1) * 0.07, 0.4) + 's';
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight - 40) {
+        el.style.opacity = '1'; el.style.transform = 'none';
+      } else {
+        io.observe(el);
+        el.setAttribute('data-ob-auto', '1');
+      }
+    });
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initAnims); }
+  else { initAnims(); }
+
+  // ── Ripple on .ob-ripple ──
+  document.addEventListener('click', function(e) {
+    var el = e.target.closest('.ob-ripple');
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    var c = document.createElement('div');
+    c.className = 'ob-ripple-circle';
+    var size = Math.max(el.offsetWidth, el.offsetHeight) * 2;
+    c.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + (e.clientX - r.left - size/2) + 'px;top:' + (e.clientY - r.top - size/2) + 'px';
+    el.appendChild(c);
+    setTimeout(function() { c.remove(); }, 600);
+  });
+
+  // ── Auto counter-up for [data-count] elements ──
+  var cio = new IntersectionObserver(function(entries) {
+    entries.forEach(function(en) {
+      if (!en.isIntersecting) return;
+      cio.unobserve(en.target);
+      var el = en.target;
+      var target = parseInt(el.dataset.count, 10);
+      var suffix = el.dataset.suffix || '';
+      var prefix = el.dataset.prefix || '';
+      var dur = 1400;
+      var start = performance.now();
+      function tick(now) {
+        var prog = Math.min((now - start) / dur, 1);
+        var ease = 1 - Math.pow(1 - prog, 3);
+        var val = Math.round(target * ease);
+        el.textContent = prefix + (val >= 1000 ? (val/1000).toFixed(val >= 10000 ? 0 : 1) + 'K' : val) + suffix;
+        if (prog < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }, { threshold: 0.5 });
+
+  function initCounters() {
+    document.querySelectorAll('[data-count]').forEach(function(el) { cio.observe(el); });
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initCounters); }
+  else { initCounters(); }
+})();
 </script>

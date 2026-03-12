@@ -1,0 +1,948 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Charging Slot - Obturo EV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1318;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      height: 64px;
+      background: #151c23;
+      border-bottom: 1px solid #232e39;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #fff;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: #22c55e;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      color: #fff;
+    }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      margin-left: 48px;
+    }
+    .nav-links a {
+      color: #b6c2ce;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+    .btn-login {
+      background: transparent;
+      border: 1px solid #374151;
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-signup {
+      background: #22c55e;
+      border: none;
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* ── PAGE BODY ── */
+    .page-body {
+      flex: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 36px 24px;
+    }
+
+    /* ── BREADCRUMB ── */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 22px;
+    }
+    .breadcrumb a { color: #64748b; text-decoration: none; }
+    .breadcrumb a:hover { color: #94a3b8; }
+    .breadcrumb .sep { color: #374151; }
+    .breadcrumb .current { color: #d1d5db; font-weight: 600; }
+
+    /* ── PAGE HEADING ── */
+    .page-heading { margin-bottom: 28px; }
+    .page-heading h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; }
+    .page-heading p { color: #94a3b8; font-size: 15px; line-height: 1.6; }
+    .page-heading p strong { color: #fff; }
+
+    /* ── LEGEND ── */
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      float: right;
+      margin-top: -56px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .leg-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+    .leg-avail  { background: transparent; border: 2px solid #475569; }
+    .leg-booked { background: #374151; }
+    .leg-sel    { background: #22c55e; }
+
+    /* ── TWO-COLUMN LAYOUT ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      align-items: start;
+      clear: both;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: #1e2730;
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    /* ── CALENDAR ── */
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .cal-title { font-size: 1.1rem; font-weight: 700; }
+    .cal-nav {
+      display: flex;
+      gap: 8px;
+    }
+    .cal-nav button {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid #2d3748;
+      background: #151c23;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .cal-nav button:hover { background: #232e39; color: #fff; }
+    .cal-grid {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 4px;
+    }
+    .cal-grid th {
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      padding-bottom: 8px;
+    }
+    .cal-grid td {
+      text-align: center;
+      padding: 2px;
+    }
+    .cal-day {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #d1d5db;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    .cal-day:hover:not(:disabled) { background: #2d3748; }
+    .cal-day.today { border: 1.5px solid #22c55e; color: #22c55e; font-weight: 700; }
+    .cal-day.selected { background: #22c55e !important; color: #0f1318 !important; font-weight: 800; border-radius: 10px; }
+    .cal-day.other-month { color: #374151; }
+    .cal-day:disabled { color: #2d3748; cursor: default; }
+
+    /* ── STATION DETAILS CARD ── */
+    .station-details-card { margin-top: 16px; }
+    .station-details-card .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+    .sd-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .sd-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #151c23;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #22c55e;
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .sd-label { font-weight: 600; font-size: 14px; color: #f1f5f9; }
+    .sd-sub { color: #64748b; font-size: 13px; margin-top: 1px; }
+    .station-graphic {
+      position: absolute;
+      right: 24px;
+      top: 60px;
+      opacity: 0.08;
+      font-size: 80px;
+      color: #22c55e;
+      pointer-events: none;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .right-panel { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── DATE + FILTER ── */
+    .date-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .date-label { font-size: 1.3rem; font-weight: 700; }
+    .filter-tabs {
+      display: flex;
+      gap: 4px;
+      background: #1e2730;
+      border-radius: 10px;
+      padding: 4px;
+    }
+    .filter-tab {
+      padding: 7px 18px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-tab.active {
+      background: #fff;
+      color: #0f1318;
+    }
+    .filter-tab:hover:not(.active) { color: #fff; }
+
+    /* ── DURATION PICKER ── */
+    .duration-bar { background: #1e2730; border-radius: 14px; padding: 18px 22px; }
+    .dp-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .dp-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .dp-pill { padding: 9px 20px; border-radius: 9px; border: 1px solid #2d3748; background: #151c23; color: #94a3b8; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .dp-pill:hover { border-color: #22c55e; color: #22c55e; }
+    .dp-pill.active { background: rgba(34,197,94,.15); border-color: #22c55e; color: #22c55e; }
+    .dp-custom-row { margin-top: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .dp-custom-row label { font-size: 13px; color: #94a3b8; }
+    .dp-custom-input { background: #151c23; border: 1px solid #2d3748; border-radius: 8px; color: #f1f5f9; font-size: 14px; padding: 8px 12px; width: 100px; outline: none; }
+    .dp-custom-input:focus { border-color: #22c55e; }
+    .dp-apply-btn { padding: 8px 18px; border-radius: 8px; background: #22c55e; color: #0f1318; border: none; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .dp-apply-btn:hover { background: #16a34a; }
+    .dp-dur-label { font-size: 13px; color: #22c55e; font-weight: 600; }
+
+    /* ── SLOT SECTION ── */
+    .slot-section { background: #1e2730; border-radius: 16px; padding: 20px 24px; }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 10px;
+    }
+    .slot-btn {
+      padding: 14px 8px;
+      border-radius: 10px;
+      border: none;
+      background: #151c23;
+      color: #d1d5db;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      position: relative;
+    }
+    .slot-btn .slot-ampm { font-size: 11px; font-weight: 500; color: #64748b; }
+    .slot-btn:hover:not(:disabled):not(.booked) { background: #2d3748; color: #fff; }
+    .slot-btn.selected {
+      background: #22c55e !important;
+      color: #0f1318 !important;
+    }
+    .slot-btn.selected .slot-ampm { color: rgba(15,19,24,0.7); }
+    .slot-btn.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #0f1318;
+    }
+    .slot-btn.booked {
+      background: #1a2130;
+      color: #374151;
+      cursor: default;
+    }
+    .slot-btn.booked .slot-ampm { color: #374151; }
+    .booked-label { font-size: 11px; color: #374151; font-weight: 500; margin-top: 1px; }
+
+    /* ── BOOKING SUMMARY ── */
+    .booking-summary {
+      background: #1e2730;
+      border-radius: 16px;
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .bs-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #151c23;
+      border: 2px solid #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #22c55e;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .bs-for { flex: 1; min-width: 140px; }
+    .bs-for-label { color: #94a3b8; font-size: 13px; margin-bottom: 3px; }
+    .bs-for-time  { font-size: 1.1rem; font-weight: 700; }
+    .bs-costs { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
+    .bs-row { display: flex; justify-content: space-between; gap: 32px; color: #94a3b8; font-size: 14px; }
+    .bs-row span:last-child { color: #fff; font-weight: 600; }
+    .bs-total { display: flex; justify-content: space-between; gap: 32px; font-size: 15px; font-weight: 700; }
+    .bs-total span:last-child { color: #22c55e; }
+    .btn-confirm {
+      background: #22c55e;
+      color: #0f1318;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-confirm:hover { background: #16a34a; }
+    .btn-confirm:active { transform: scale(0.97); }
+    .btn-confirm:disabled { background: #374151; color: #64748b; cursor: default; }
+
+    /* ── ERROR ── */
+    .alert-error {
+      background: #450a0a;
+      border: 1px solid #7f1d1d;
+      color: #fca5a5;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      color: #374151;
+      font-size: 13px;
+      padding: 24px;
+      border-top: 1px solid #1e2730;
+      margin-top: auto;
+    }
+
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+      .legend { float: none; margin-top: 0; }
+      .booking-summary { flex-direction: column; align-items: stretch; }
+      .btn-confirm { width: 100%; justify-content: center; }
+      nav { padding: 0 16px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="/home/">
+    <div class="nav-logo-icon"><i class="fa fa-plug"></i></div>
+    Obturo EV
+  </a>
+  <div class="nav-links">
+    <a href="/stations/">Stations</a>
+    <a href="#">Pricing</a>
+    <a href="#">Support</a>
+  </div>
+  <div class="nav-actions">
+    <a class="btn-login" href="/bookings/">My Bookings</a>
+    <a class="btn-signup" href="/stations/">Explore</a>
+  </div>
+</nav>
+
+<!-- PAGE BODY -->
+<div class="page-body">
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb">
+    <a href="/home/">Home</a>
+    <span class="sep">›</span>
+    <a href="/stations/">Stations</a>
+    <span class="sep">›</span>
+    <span class="current">{{ station.name|default:"Station" }} - Booking</span>
+  </div>
+
+  <!-- HEADING + LEGEND -->
+  <div class="page-heading">
+    <h1>Select Charging Slot</h1>
+    <p>Choose your preferred time at <strong>{{ station.name|default:"this station" }}{% if station.power_kw %} ({{ station.power_kw|floatformat:0 }}kW){% endif %}</strong>. Prices may vary during peak hours.</p>
+    <div class="legend">
+      <div class="legend-item"><div class="leg-dot leg-avail"></div> Available</div>
+      <div class="legend-item"><div class="leg-dot leg-booked"></div> Booked</div>
+      <div class="legend-item"><div class="leg-dot leg-sel"></div> Selected</div>
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="alert-error"><i class="fa fa-circle-exclamation" style="margin-right:6px;"></i>{{ error }}</div>
+  {% endif %}
+
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- LEFT: CALENDAR + STATION DETAILS -->
+    <div>
+      <!-- Calendar -->
+      <div class="card">
+        <div class="cal-header">
+          <div class="cal-title" id="calTitle"></div>
+          <div class="cal-nav">
+            <button onclick="changeMonth(-1)"><i class="fa fa-chevron-left"></i></button>
+            <button onclick="changeMonth(1)"><i class="fa fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <table class="cal-grid">
+          <thead>
+            <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+          </thead>
+          <tbody id="calBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Station Details -->
+      <div class="card station-details-card" style="position:relative; overflow:hidden; margin-top:16px;">
+        <div class="station-graphic"><i class="fa fa-charging-station"></i></div>
+        <div class="card-title">Station Details</div>
+        <div class="sd-row">
+          <div class="sd-icon"><i class="fa fa-location-dot"></i></div>
+          <div>
+            <div class="sd-label">{{ station.name|default:"Unknown Station" }}</div>
+            <div class="sd-sub">{{ station.address|default:"Address not available" }}</div>
+          </div>
+        </div>
+        <div class="sd-row">
+          <div class="sd-icon"><i class="fa fa-bolt"></i></div>
+          <div>
+            <div class="sd-label">{{ station.power_kw|default:"N/A" }}kW {{ station.charger_type|default:"" }} ({{ station.connector_type|default:"N/A" }})</div>
+          </div>
+        </div>
+        <div class="sd-row">
+          <div class="sd-icon"><i class="fa fa-circle-dollar-to-slot"></i></div>
+          <div>
+            <div class="sd-label">₹{{ station.price_per_kwh|default:"0" }} / kWh</div>
+          </div>
+        </div>
+        {% if station.available_slots is not None %}
+        <div class="sd-row">
+          <div class="sd-icon"><i class="fa fa-plug-circle-check"></i></div>
+          <div>
+            <div class="sd-label">{{ station.available_slots }} / {{ station.total_slots }} Slots Available</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT: SLOTS + SUMMARY -->
+    <div class="right-panel">
+
+      <!-- Date + Filter -->
+      <div>
+        <div class="date-bar">
+          <div class="date-label" id="selectedDateLabel"></div>
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filterSlots('all', this)">All Day</button>
+            <button class="filter-tab" onclick="filterSlots('morning', this)">Morning</button>
+            <button class="filter-tab" onclick="filterSlots('afternoon', this)">Afternoon</button>
+            <button class="filter-tab" onclick="filterSlots('evening', this)">Evening</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DURATION PICKER -->
+      <div class="duration-bar">
+        <div class="dp-label"><i class="fa fa-clock"></i> Charging Duration</div>
+        <div class="dp-pills">
+          <button class="dp-pill" onclick="setDuration(30, this)">30 min</button>
+          <button class="dp-pill active" id="pill60" onclick="setDuration(60, this)">1 hr</button>
+          <button class="dp-pill" onclick="setDuration(120, this)">2 hr</button>
+          <button class="dp-pill" onclick="setDuration(180, this)">3 hr</button>
+          <button class="dp-pill" onclick="setDuration(240, this)">4 hr</button>
+          <button class="dp-pill" id="customPill" onclick="showCustomDuration(this)">Custom</button>
+        </div>
+        <div class="dp-custom-row" id="customRow" style="display:none;">
+          <label>Minutes:</label>
+          <input type="number" id="customMinutes" class="dp-custom-input" min="15" max="480" step="15" placeholder="e.g. 90">
+          <button class="dp-apply-btn" onclick="applyCustomDuration()">Apply</button>
+          <span class="dp-dur-label" id="dpDurLabel"></span>
+        </div>
+      </div>
+
+      <!-- MORNING SLOTS -->
+      <div class="slot-section" id="morningSection">
+        <div class="section-title">
+          <i class="fa fa-sun"></i> Morning
+        </div>
+        <div class="slots-grid" id="morningSlots"></div>
+      </div>
+
+      <!-- AFTERNOON SLOTS -->
+      <div class="slot-section" id="afternoonSection">
+        <div class="section-title">
+          <i class="fa fa-clock"></i> Afternoon
+        </div>
+        <div class="slots-grid" id="afternoonSlots"></div>
+      </div>
+
+      <!-- EVENING SLOTS -->
+      <div class="slot-section" id="eveningSection">
+        <div class="section-title">
+          <i class="fa fa-moon"></i> Evening
+        </div>
+        <div class="slots-grid" id="eveningSlots"></div>
+      </div>
+
+      <!-- BOOKING SUMMARY -->
+      <div class="booking-summary" id="bookingSummary">
+        <div class="bs-icon"><i class="fa fa-car-side"></i></div>
+        <div class="bs-for">
+          <div class="bs-for-label">Booking for</div>
+          <div class="bs-for-time" id="bsTime">Select a slot above</div>
+        </div>
+        <div class="bs-costs">
+          <div class="bs-row"><span>Est. Charge ({{ station.power_kw|default:"0"|floatformat:0 }}kWh)</span><span id="bsEnergyCost">—</span></div>
+          <div class="bs-row"><span>Service Fee</span><span id="bsServiceFee">—</span></div>
+          <div class="bs-total"><span>Total Estimate</span><span id="bsTotal">—</span></div>
+        </div>
+        <form method="post" id="bookingForm" style="margin:0;">
+          {% csrf_token %}
+          <input type="hidden" name="start_time" id="inputStart">
+          <input type="hidden" name="end_time" id="inputEnd">
+          <button type="submit" class="btn-confirm" id="confirmBtn" disabled>
+            Confirm Booking <i class="fa fa-arrow-right"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>© 2026 Obturo EV. All rights reserved.</footer>
+
+<script>
+  // ── Config from Django ──
+  const STATION_ID  = {{ station_id }};
+  const PRICE_PER_KWH = parseFloat("{{ station.price_per_kwh|default:'0.42' }}") || 0.42;
+  const POWER_KW    = parseFloat("{{ station.power_kw|default:'45' }}") || 45;
+  const SERVICE_FEE = 2.50;
+  let selectedDuration = 60; // minutes — changed by duration picker
+  const AUTH_TOKEN  = "{{ auth_token }}";
+
+  let selectedDate  = new Date();
+  let selectedSlot  = null; // { hour, minute, label, ampm }
+  let calYear       = selectedDate.getFullYear();
+  let calMonth      = selectedDate.getMonth();
+  let bookedSlots   = []; // filled from API
+
+  // ── Seeded fake bookings for realism ──
+  // Produces consistent "already-booked" slots based on station + date
+  function getFakeBusyMinutes(stationId, dateStr) {
+    let seed = 0;
+    const key = String(stationId) + dateStr;
+    for (let i = 0; i < key.length; i++) {
+      seed = ((seed << 5) - seed + key.charCodeAt(i)) | 0;
+    }
+    const rng = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 0xffffffff; };
+    const allSlots = [];
+    for (let h = 6; h < 23; h++) { allSlots.push(h * 60); allSlots.push(h * 60 + 30); }
+    const numBusy = Math.floor(rng() * 9) + 5; // 5-13 fake busy slots
+    const busy = new Set();
+    while (busy.size < numBusy) { busy.add(allSlots[Math.floor(rng() * allSlots.length)]); }
+    return busy;
+  }
+  let fakeBusyMinutes = new Set(); // initialized in init() after formatDate is ready
+
+  // ── Calendar ──
+  const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const DAY_NAMES   = ["S","M","T","W","T","F","S"];
+
+  function renderCalendar() {
+    document.getElementById('calTitle').textContent = `${MONTH_NAMES[calMonth]} ${calYear}`;
+    const tbody = document.getElementById('calBody');
+    tbody.innerHTML = '';
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+    const today       = new Date();
+
+    let day = 1, nextDay = 1;
+    for (let row = 0; row < 6; row++) {
+      const tr = document.createElement('tr');
+      for (let col = 0; col < 7; col++) {
+        const td = document.createElement('td');
+        const idx = row * 7 + col;
+        let btn = document.createElement('button');
+        btn.className = 'cal-day';
+        if (idx < firstDay) {
+          const d = daysInPrev - firstDay + idx + 1;
+          btn.textContent = d;
+          btn.classList.add('other-month');
+          btn.disabled = true;
+        } else if (day > daysInMonth) {
+          btn.textContent = nextDay++;
+          btn.classList.add('other-month');
+          btn.disabled = true;
+        } else {
+          const thisDate = new Date(calYear, calMonth, day);
+          btn.textContent = day;
+          const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+          const isPast  = thisDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          if (isToday) btn.classList.add('today');
+          if (isPast) btn.disabled = true;
+          const isSel = selectedDate.getDate() === day && selectedDate.getMonth() === calMonth && selectedDate.getFullYear() === calYear;
+          if (isSel) btn.classList.add('selected');
+          if (!isPast) {
+            (function(d){ btn.addEventListener('click', function(){ selectDate(new Date(calYear, calMonth, d)); }); })(day);
+          }
+          day++;
+        }
+        td.appendChild(btn);
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+      if (day > daysInMonth && nextDay > 1) break;
+    }
+  }
+
+  function changeMonth(dir) {
+    calMonth += dir;
+    if (calMonth < 0)  { calMonth = 11; calYear--; }
+    if (calMonth > 11) { calMonth = 0;  calYear++; }
+    renderCalendar();
+  }
+
+  function selectDate(d) {
+    selectedDate = d;
+    selectedSlot  = null;
+    fakeBusyMinutes = getFakeBusyMinutes(STATION_ID, formatDate(d));
+    clearConfirm();
+    renderCalendar();
+    renderDateLabel();
+    fetchBookingsForDate().then(renderSlots);
+  }
+
+  function renderDateLabel() {
+    const opts = { weekday: 'long', month: 'short', day: 'numeric' };
+    const parts = selectedDate.toLocaleDateString('en-US', { weekday:'long' }).split(',');
+    const day   = selectedDate.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const weekday = selectedDate.toLocaleDateString('en-US', { weekday:'long' });
+    const ord = (n) => { const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); };
+    document.getElementById('selectedDateLabel').textContent = `${weekday}, ${MONTH_NAMES[selectedDate.getMonth()].slice(0,3)} ${ord(selectedDate.getDate())}`;
+  }
+
+  // ── Slot generation ──
+  function pad(n){ return n.toString().padStart(2,'0'); }
+
+  function makeSlots(startHour, endHour) {
+    const slots = [];
+    for (let h = startHour; h < endHour; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        const hour12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+        const ampm = h < 12 ? 'AM' : 'PM';
+        slots.push({ hour: h, minute: m, label: `${pad(hour12)}:${pad(m)}`, ampm });
+      }
+    }
+    return slots;
+  }
+
+  function isBooked(h, m) {
+    // Check fake seeded slots
+    if (fakeBusyMinutes.has(h * 60 + m)) return true;
+    // Check real API bookings
+    return bookedSlots.some(b => {
+      const start = new Date(b.start_time);
+      const end   = new Date(b.end_time);
+      const slotStart = new Date(selectedDate);
+      slotStart.setHours(h, m, 0, 0);
+      const slotEnd = new Date(slotStart);
+      slotEnd.setMinutes(slotEnd.getMinutes() + selectedDuration);
+      return slotStart < end && slotEnd > start;
+    });
+  }
+
+  function renderSlotGroup(slots, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    const now = new Date();
+    slots.forEach(s => {
+      const slotStart = new Date(selectedDate);
+      slotStart.setHours(s.hour, s.minute, 0, 0);
+      const isPast    = slotStart <= now;
+      const booked    = isBooked(s.hour, s.minute);
+      const isSel     = selectedSlot && selectedSlot.hour === s.hour && selectedSlot.minute === s.minute;
+
+      const btn = document.createElement('button');
+      btn.className = 'slot-btn' + (booked ? ' booked' : '') + (isSel ? ' selected' : '');
+      btn.disabled  = isPast || booked;
+      btn.innerHTML = `<span>${s.label}</span><span class="slot-ampm">${booked ? '' : s.ampm}</span>${booked ? '<span class="booked-label">Booked</span>' : ''}`;
+      if (!isPast && !booked) {
+        btn.addEventListener('click', () => selectSlot(s));
+      }
+      container.appendChild(btn);
+    });
+  }
+
+  function renderSlots() {
+    renderSlotGroup(makeSlots(6, 12),  'morningSlots');
+    renderSlotGroup(makeSlots(12, 17), 'afternoonSlots');
+    renderSlotGroup(makeSlots(17, 23), 'eveningSlots');
+  }
+
+  function selectSlot(s) {
+    selectedSlot = s;
+    renderSlots();
+    updateSummary();
+  }
+
+  // ── Duration picker ──
+  function setDuration(mins, btn) {
+    selectedDuration = mins;
+    document.querySelectorAll('.dp-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    document.getElementById('customRow').style.display = 'none';
+    document.getElementById('dpDurLabel').textContent = '';
+    // update summary if a slot is already selected
+    if (selectedSlot) updateSummary();
+  }
+
+  function showCustomDuration(btn) {
+    document.querySelectorAll('.dp-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('customRow').style.display = 'flex';
+  }
+
+  function applyCustomDuration() {
+    const val = parseInt(document.getElementById('customMinutes').value);
+    if (!val || val < 15 || val > 480) {
+      document.getElementById('dpDurLabel').textContent = 'Enter 15–480 min';
+      document.getElementById('dpDurLabel').style.color = '#f87171';
+      return;
+    }
+    selectedDuration = val;
+    const h = Math.floor(val / 60), m = val % 60;
+    const label = h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+    document.getElementById('dpDurLabel').textContent = `✓ ${label} selected`;
+    document.getElementById('dpDurLabel').style.color = '#22c55e';
+    if (selectedSlot) updateSummary();
+  }
+
+  // ── Filter tabs ──
+  function filterSlots(period, btn) {
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const ms = document.getElementById('morningSection');
+    const as = document.getElementById('afternoonSection');
+    const es = document.getElementById('eveningSection');
+    ms.style.display = (period === 'all' || period === 'morning')   ? '' : 'none';
+    as.style.display = (period === 'all' || period === 'afternoon') ? '' : 'none';
+    es.style.display = (period === 'all' || period === 'evening')   ? '' : 'none';
+  }
+
+  // ── Summary ──
+  function updateSummary() {
+    if (!selectedSlot) { clearConfirm(); return; }
+
+    const start = new Date(selectedDate);
+    start.setHours(selectedSlot.hour, selectedSlot.minute, 0, 0);
+    const end = new Date(start);
+    end.setMinutes(end.getMinutes() + selectedDuration);
+
+    const hours = selectedDuration / 60;
+    const energyKwh  = POWER_KW * hours;
+    const energyCost = energyKwh * PRICE_PER_KWH;
+    const total = energyCost + SERVICE_FEE;
+
+    const dateStr = start.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const sh = selectedSlot.label, sampm = selectedSlot.ampm;
+    const eh = end.getHours() > 12 ? end.getHours()-12 : (end.getHours() === 0 ? 12 : end.getHours());
+    const eLabel = `${pad(eh)}:${pad(end.getMinutes())} ${end.getHours() < 12 ? 'AM' : 'PM'}`;
+    const durH = Math.floor(selectedDuration/60), durM = selectedDuration%60;
+    const durStr = durH > 0 ? (durM > 0 ? `${durH}h ${durM}m` : `${durH}h`) : `${durM}m`;
+
+    document.getElementById('bsTime').textContent = `${dateStr}, ${sh} ${sampm} – ${eLabel} (${durStr})`;
+    document.getElementById('bsEnergyCost').textContent = `₹${energyCost.toFixed(2)}`;
+    document.getElementById('bsServiceFee').textContent = `₹${SERVICE_FEE.toFixed(2)}`;
+    document.getElementById('bsTotal').textContent      = `₹${total.toFixed(2)}`;
+
+    // set hidden inputs
+    document.getElementById('inputStart').value = formatDateTime(start);
+    document.getElementById('inputEnd').value   = formatDateTime(end);
+
+    document.getElementById('confirmBtn').disabled = false;
+  }
+
+  function clearConfirm() {
+    document.getElementById('bsTime').textContent = 'Select a slot above';
+    document.getElementById('bsEnergyCost').textContent = '—';
+    document.getElementById('bsServiceFee').textContent = '—';
+    document.getElementById('bsTotal').textContent      = '—';
+    document.getElementById('confirmBtn').disabled = true;
+    document.getElementById('inputStart').value = '';
+    document.getElementById('inputEnd').value   = '';
+  }
+
+  // ── Helpers ──
+  function formatDate(d) {
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+  function formatDateTime(d) {
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  // ── Fetch existing bookings ──
+  async function fetchBookingsForDate() {
+    try {
+      const res = await fetch(`/api/bookings/my/`, {
+        headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // filter bookings for this station and selected date
+        const dateStr = formatDate(selectedDate);
+        bookedSlots = (data.bookings || data || []).filter(b => {
+          const start = new Date(b.start_time);
+          const bDate = `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}`;
+          return String(b.station_id) === String(STATION_ID) && bDate === dateStr;
+        });
+      }
+    } catch(e) {
+      bookedSlots = [];
+    }
+  }
+
+  // ── Init ──
+  (async function init() {
+    renderCalendar();
+    renderDateLabel();
+    fakeBusyMinutes = getFakeBusyMinutes(STATION_ID, formatDate(selectedDate));
+    await fetchBookingsForDate();
+    renderSlots();
+  })();
+</script>
+
+
+  {% include 'web/includes/sidebar_nav.html' %}
+  {% include 'web/includes/active_bookings_sidebar.html' %}
+</body>
+</html>

@@ -1,331 +1,123 @@
+﻿{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Obturo - Favorite Stations</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Favourites – Obturo EV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f7fa;
-    }
-    
-    nav {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      padding: 16px 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    nav .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .nav-brand {
-      font-size: 24px;
-      font-weight: 700;
-    }
-    
-    .nav-links {
-      display: flex;
-      gap: 30px;
-      list-style: none;
-    }
-    
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    
-    .logout-btn {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 2px solid white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-    
-    h1 {
-      font-size: 36px;
-      color: #1a1a1a;
-      margin-bottom: 40px;
-    }
-    
-    .stations-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
-    }
-    
-    .station-card {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      transition: all 0.2s;
-      border-left: 4px solid #10b981;
-    }
-    
-    .station-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
-    }
-    
-    .card-header {
-      background: #f8f9fa;
-      padding: 20px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    
-    .station-name {
-      font-size: 18px;
-      font-weight: 700;
-      color: #1a1a1a;
-      margin-bottom: 4px;
-    }
-    
-    .station-address {
-      font-size: 13px;
-      color: #666;
-    }
-    
-    .card-body {
-      padding: 20px;
-    }
-    
-    .specs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .spec {
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 6px;
-      text-align: center;
-    }
-    
-    .spec-label {
-      font-size: 11px;
-      color: #999;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    
-    .spec-value {
-      font-size: 14px;
-      font-weight: 700;
-      color: #10b981;
-    }
-    
-    .actions {
-      display: flex;
-      gap: 10px;
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary {
-      background: #10b981;
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: #059669;
-    }
-    
-    .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
-      border: 1px solid #ddd;
-    }
-    
-    .btn-secondary:hover {
-      background: #e0e0e0;
-    }
-    
-    .no-favorites {
-      text-align: center;
-      padding: 60px 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    
-    .no-favorites-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #131720; --card: #1a1f2e; --card2: #222836; --border: #2a3142; --green: #22c55e; --gd: #16a34a; --text: #f1f5f9; --muted: #94a3b8; --subtle: #64748b; }
+    body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .ob-nav { background: rgba(26,31,46,0.5); backdrop-filter: blur(22px) saturate(200%); -webkit-backdrop-filter: blur(22px) saturate(200%); border-bottom: 1px solid rgba(255,255,255,0.07); box-shadow: 0 1px 0 rgba(255,255,255,0.04); position: sticky; top: 0; z-index: 200; transition: background .3s, border-color .3s; }
+    .ob-nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 64px; display: flex; align-items: center; gap: 28px; }
+    .ob-logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; color: #fff; text-decoration: none; flex-shrink: 0; }
+    .ob-logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
+    .ob-nav-links { display: flex; gap: 24px; }
+    .ob-nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .15s; }
+    .ob-nav-links a:hover, .ob-nav-links a.active { color: #fff; }
+    .ob-nav-actions { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+    .ob-btn-out { background: transparent; border: 1px solid var(--border); color: #fff; padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: border-color .15s; }
+    .ob-btn-out:hover { border-color: var(--green); color: var(--green); }
+    .page { max-width: 1280px; margin: 0 auto; padding: 32px 32px 60px; }
+    .page-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 28px; }
+    .stations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+    .station-card { background: rgba(26,31,46,0.55); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05); transition: border-color .15s, transform .15s, box-shadow .15s; }
+    .station-card:hover { border-color: rgba(34,197,94,0.4); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07); }
+    .card-top { padding: 18px 20px 0; }
+    .stn-name { font-size: 1.05rem; font-weight: 800; margin-bottom: 4px; }
+    .stn-addr { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .specs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 20px; }
+    .spec-item { background: rgba(255,255,255,0.04); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px 12px; }
+    .spec-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--subtle); margin-bottom: 2px; }
+    .spec-val { font-size: 14px; font-weight: 700; }
+    .card-actions { display: flex; gap: 10px; padding: 0 20px 18px; }
+    .btn-book { background: var(--green); border: none; color: #fff; padding: 9px 0; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; flex: 1; text-align: center; text-decoration: none; display: block; }
+    .btn-book:hover { background: var(--gd); }
+    .btn-remove { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 9px 14px; border-radius: 9px; font-size: 14px; cursor: pointer; transition: border-color .15s; }
+    .btn-remove:hover { border-color: #ef4444; color: #f87171; }
+    .empty-state { text-align: center; padding: 80px 32px; color: var(--muted); }
+    .empty-state i { font-size: 3rem; color: var(--subtle); display: block; margin-bottom: 14px; }
+    .empty-state a { color: var(--green); text-decoration: none; font-weight: 600; display: inline-block; margin-top: 10px; }
+    @media (max-width: 700px) { .ob-nav-links { display: none; } .page { padding: 16px; } }
   </style>
 </head>
 <body>
-  <nav>
-    <div class="container">
-      <div class="nav-brand">Obturo</div>
-      <ul class="nav-links">
-        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-        <li><a href="{% url 'stations' %}">Explore</a></li>
-        <li><a href="{% url 'bookings' %}">Bookings</a></li>
-        <li><a href="{% url 'analytics' %}">Analytics</a></li>
-        <li><a href="{% url 'ranking' %}">Ranking</a></li>
-        <li><a href="{% url 'favorites' %}">Favorites</a></li>
-        <li><a href="{% url 'profile' %}">Profile</a></li>
-      </ul>
-      <div style="display: flex; gap: 20px; align-items: center;">
-        <span style="color: white;">{{ username }}</span>
-        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+<div id="authData" data-auth-token="{{ auth_token }}" style="display:none;"></div>
+<nav class="ob-nav" id="mainNav">
+  <div class="ob-nav-inner">
+    <a class="ob-logo" href="{% url 'dashboard' %}">
+      <div class="ob-logo-icon"><i class="fa fa-plug"></i></div>Obturo EV
+    </a>
+    <div class="ob-nav-links">
+      <a href="{% url 'dashboard' %}">Dashboard</a>
+      <a href="{% url 'stations' %}">Stations</a>
+      <a href="{% url 'favorites' %}" class="active">Favourites</a>
+      <a href="{% url 'profile' %}">Profile</a>
+    </div>
+    <div class="ob-nav-actions">
+      <a href="{% url 'logout' %}" class="ob-btn-out">Sign Out</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-title">Favourite Stations</div>
+
+  {% if favorites %}
+  <div class="stations-grid" id="favGrid">
+    {% for fav in favorites %}
+    <div class="station-card" id="fav-card-{{ fav.station.id }}">
+      <div class="card-top">
+        <div class="stn-name">{{ fav.station.name }}</div>
+        <div class="stn-addr"><i class="fa fa-location-dot" style="color:var(--green)"></i> {{ fav.station.address }}</div>
+      </div>
+      <div class="specs-row">
+        <div class="spec-item"><div class="spec-lbl">Type</div><div class="spec-val">{{ fav.station.charger_type }}</div></div>
+        <div class="spec-item"><div class="spec-lbl">Power</div><div class="spec-val">{{ fav.station.power_kw }} kW</div></div>
+        <div class="spec-item"><div class="spec-lbl">Price</div><div class="spec-val">₹{{ fav.station.price_per_kwh }}/kWh</div></div>
+        <div class="spec-item"><div class="spec-lbl">Slots</div><div class="spec-val">{{ fav.station.available_slots }}/{{ fav.station.total_slots }}</div></div>
+      </div>
+      <div class="card-actions">
+        <a class="btn-book" href="/book/{{ fav.station.id }}/">Book Now</a>
+        <button class="btn-remove" onclick="removeFavorite({{ fav.station.id }}, this)"><i class="fa fa-heart-crack"></i></button>
       </div>
     </div>
-  </nav>
-  
-  <div class="container">
-    <h1>Favorite Stations</h1>
-    
-    {% if favorites %}
-      <div class="stations-grid">
-        {% for fav in favorites %}
-          <div class="station-card">
-            <div class="card-header">
-              <div class="station-name">{{ fav.station.name }}</div>
-              <div class="station-address">{{ fav.station.address }}</div>
-            </div>
-            
-            <div class="card-body">
-              <div class="specs">
-                <div class="spec">
-                  <div class="spec-label">Type</div>
-                  <div class="spec-value">{{ fav.station.charger_type }}</div>
-                </div>
-                <div class="spec">
-                  <div class="spec-label">Power</div>
-                  <div class="spec-value">{{ fav.station.power_kw }} kW</div>
-                </div>
-                <div class="spec">
-                  <div class="spec-label">Price</div>
-                  <div class="spec-value">₹{{ fav.station.price_per_kwh }}/kWh</div>
-                </div>
-                <div class="spec">
-                  <div class="spec-label">Slots</div>
-                  <div class="spec-value">{{ fav.station.available_slots }}/{{ fav.station.total_slots }}</div>
-                </div>
-              </div>
-              
-              <div class="actions">
-                <button class="btn btn-primary" onclick="window.location.href='/book/{{ fav.station.id }}/')">Book</button>
-                <button class="btn btn-secondary" onclick="removeFavorite({{ fav.station.id }}, this)">Remove</button>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="no-favorites">
-        <div class="no-favorites-icon"></div>
-        <h2>No Favorite Stations</h2>
-        <p style="color: #666; margin: 12px 0 20px;">Add charging stations to your favorites for quick access!</p>
-        <a href="{% url 'stations' %}" style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Find Stations</a>
-      </div>
-    {% endif %}
+    {% endfor %}
   </div>
-  
-  <!-- Hidden auth token -->
-  <div id="authData" data-auth-token="{{ auth_token }}" style="display:none;"></div>
-  
-  <script>
-    function removeFavorite(stationId, btn) {
-      if (!confirm('Remove this station from favorites?')) return;
-      
-      const authData = document.getElementById('authData');
-      const authToken = authData ? authData.getAttribute('data-auth-token') : null;
-      
-      if (!authToken) {
-        alert('Please login');
-        window.location.href = '/login/';
-        return;
-      }
-      
-      btn.disabled = true;
-      btn.textContent = '...';
-      
-      fetch('/api/favourites/toggle/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ station_id: stationId })
-      })
-      .then(async r => {
-        let data = {};
-        try { data = await r.json(); } catch (e) {}
-        if (!r.ok) {
-          alert(data.error || 'Failed to remove');
-          btn.disabled = false;
-          btn.textContent = '❌ Remove';
-          return;
-        }
-        // Remove card from DOM
-        const card = btn.closest('.station-card');
-        if (card) {
-          card.style.transition = 'opacity 0.3s';
-          card.style.opacity = '0';
-          setTimeout(() => {
-            card.remove();
-            // Check if no more favorites
-            const grid = document.querySelector('.stations-grid');
-            if (grid && grid.children.length === 0) {
-              window.location.reload();
-            }
-          }, 300);
-        }
-      })
-      .catch(err => {
-        alert('Error: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = '❌ Remove';
-      });
-    }
-  </script>
-  
-  <!-- Include Sidebar Navigation -->
+  {% else %}
+  <div class="empty-state">
+    <i class="fa fa-heart"></i>
+    <div style="font-size:1.1rem;font-weight:700;">No favourites yet</div>
+    <div style="font-size:14px;color:var(--subtle);margin-top:6px;">Save stations you love for quick access.</div>
+    <a href="{% url 'stations' %}">Find Stations →</a>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  function removeFavorite(id, btn) {
+    if(!confirm('Remove this station from favourites?')) return;
+    const token = document.getElementById('authData').dataset.authToken;
+    btn.disabled = true;
+    fetch('/api/favourites/toggle/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify({station_id: id})
+    }).then(async r => {
+      if(r.ok) {
+        const card = document.getElementById('fav-card-'+id);
+        if(card) { card.style.opacity='0'; card.style.transition='opacity .3s'; setTimeout(()=>card.remove(), 300); }
+      } else btn.disabled = false;
+    }).catch(()=>{ btn.disabled=false; alert('Error removing favourite'); });
+  }
+</script>
+
   {% include 'web/includes/sidebar_nav.html' %}
-  
-  <!-- Include Active Bookings Sidebar -->
   {% include 'web/includes/active_bookings_sidebar.html' %}
-  
-  <!-- Include Charging Widget -->
-  {% include 'web/includes/charging_widget.html' %}
+<script>
+(function(){var nav=document.getElementById('mainNav');if(!nav)return;var lastY=0;function upd(){var y=window.scrollY||window.pageYOffset;if(y<10){nav.style.background='transparent';nav.style.borderBottomColor='transparent';}else if(y<lastY){nav.style.background='rgba(26,31,46,.97)';nav.style.borderBottomColor='var(--border)';}else{nav.style.background='rgba(26,31,46,.6)';nav.style.borderBottomColor='transparent';}lastY=y;}window.addEventListener('scroll',upd,{passive:true});upd();})();
+</script>
 </body>
 </html>

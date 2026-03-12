@@ -48,6 +48,13 @@ class ChargingStationSerializer(serializers.ModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     station_name = serializers.CharField(source='station.name', read_only=True)
     station_id = serializers.IntegerField(source='station.id', read_only=True)
+    station_latitude = serializers.FloatField(source='station.latitude', read_only=True)
+    station_longitude = serializers.FloatField(source='station.longitude', read_only=True)
+    station_address = serializers.CharField(source='station.address', read_only=True, default='')
+    connector_type = serializers.CharField(source='station.connector_type', read_only=True)
+    power_kw = serializers.FloatField(source='station.power_kw', read_only=True)
+    price_per_kwh = serializers.FloatField(source='station.price_per_kwh', read_only=True)
+    charger_type = serializers.CharField(source='station.charger_type', read_only=True)
     created_at = serializers.SerializerMethodField()
     start_time = serializers.SerializerMethodField()
     end_time = serializers.SerializerMethodField()
@@ -55,8 +62,9 @@ class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = [
-            'id', 'station_id', 'station_name', 'start_time', 'end_time',
-            'status', 'created_at'
+            'id', 'station_id', 'station_name', 'station_latitude', 'station_longitude',
+            'station_address', 'connector_type', 'power_kw', 'price_per_kwh', 'charger_type',
+            'start_time', 'end_time', 'status', 'created_at'
         ]
 
     def get_created_at(self, obj):

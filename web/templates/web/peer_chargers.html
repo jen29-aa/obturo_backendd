@@ -1,290 +1,191 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Obturo - Peer Chargers</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peer Chargers – Obturo EV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f7fa;
-    }
-    
-    nav {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      padding: 16px 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    nav .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .nav-brand {
-      font-size: 24px;
-      font-weight: 700;
-    }
-    
-    .nav-links {
-      display: flex;
-      gap: 30px;
-      list-style: none;
-    }
-    
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    
-    .logout-btn {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 2px solid white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-    
-    h1 {
-      font-size: 36px;
-      color: #1a1a1a;
-      margin-bottom: 40px;
-    }
-    
-    .header-info {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 12px;
-      margin-bottom: 40px;
-    }
-    
-    .header-info p {
-      font-size: 16px;
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
-    
-    .chargers-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
-    }
-    
-    .charger-card {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      transition: all 0.2s;
-      border-left: 4px solid #ffa500;
-    }
-    
-    .charger-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
-    }
-    
-    .card-header {
-      background: #fff8f0;
-      padding: 20px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    
-    .charger-owner {
-      font-size: 12px;
-      color: #999;
-      margin-bottom: 4px;
-    }
-    
-    .charger-name {
-      font-size: 18px;
-      font-weight: 700;
-      color: #1a1a1a;
-      margin-bottom: 4px;
-    }
-    
-    .charger-address {
-      font-size: 13px;
-      color: #666;
-    }
-    
-    .card-body {
-      padding: 20px;
-    }
-    
-    .specs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .spec {
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 6px;
-      text-align: center;
-    }
-    
-    .spec-label {
-      font-size: 11px;
-      color: #999;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    
-    .spec-value {
-      font-size: 14px;
-      font-weight: 700;
-      color: #ffa500;
-    }
-    
-    .actions {
-      display: flex;
-      gap: 10px;
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary {
-      background: #ffa500;
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: #ff8c00;
-    }
-    
-    .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
-      border: 1px solid #ddd;
-    }
-    
-    .btn-secondary:hover {
-      background: #e0e0e0;
-    }
-    
-    .no-chargers {
-      text-align: center;
-      padding: 60px 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    
-    .no-chargers-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #131720; --card: #1a1f2e; --card2: #222836; --border: #2a3142; --green: #22c55e; --gd: #16a34a; --text: #f1f5f9; --muted: #94a3b8; --subtle: #64748b; }
+    body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .ob-nav { background: rgba(26,31,46,0.5); backdrop-filter: blur(22px) saturate(200%); -webkit-backdrop-filter: blur(22px) saturate(200%); border-bottom: 1px solid rgba(255,255,255,0.07); box-shadow: 0 1px 0 rgba(255,255,255,0.04); position: sticky; top: 0; z-index: 200; transition: background .3s, border-color .3s; }
+    .ob-nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 64px; display: flex; align-items: center; gap: 28px; }
+    .ob-logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; color: #fff; text-decoration: none; flex-shrink: 0; }
+    .ob-logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
+    .ob-nav-links { display: flex; gap: 24px; }
+    .ob-nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .15s; }
+    .ob-nav-links a:hover, .ob-nav-links a.active { color: #fff; }
+    .ob-nav-actions { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+    .ob-btn-out { background: transparent; border: 1px solid var(--border); color: #fff; padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: border-color .15s; }
+    .ob-btn-out:hover { border-color: var(--green); color: var(--green); }
+    .page { max-width: 1280px; margin: 0 auto; padding: 32px 32px 60px; }
+    .page-hdr { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
+    .page-title { font-size: 1.8rem; font-weight: 900; }
+    .page-sub { color: var(--muted); font-size: 14px; margin-top: 3px; }
+
+    /* Info banner */
+    .info-banner { background: linear-gradient(135deg, #16a34a, #059669); border-radius: 14px; padding: 22px 28px; margin-bottom: 28px; display: flex; gap: 16px; align-items: center; }
+    .info-banner i { font-size: 1.8rem; flex-shrink: 0; }
+    .ib-title { font-size: 1rem; font-weight: 800; margin-bottom: 4px; }
+    .ib-sub { color: rgba(255,255,255,.75); font-size: 13px; }
+
+    /* Grid */
+    .chargers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+    .ch-card { background: rgba(26,31,46,0.55); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05); transition: border-color .15s, transform .15s; }
+    .ch-card:hover { border-color: rgba(34,197,94,0.4); transform: translateY(-2px); }
+    .ch-header { padding: 18px 20px 12px; }
+    .ch-owner { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--subtle); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .ch-name { font-size: 1.05rem; font-weight: 800; }
+    .ch-addr { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+    .ch-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 14px; }
+    .sp-item { background: rgba(255,255,255,0.04); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px 12px; }
+    .sp-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--subtle); margin-bottom: 2px; }
+    .sp-val { font-size: 14px; font-weight: 700; }
+    .ch-actions { display: flex; gap: 10px; padding: 0 20px 18px; }
+    .btn-req { background: var(--green); border: none; color: #fff; padding: 9px; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; flex: 1; }
+    .btn-req:hover { background: var(--gd); }
+    .btn-msg { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 9px 14px; border-radius: 9px; font-size: 13px; cursor: pointer; transition: border-color .15s; }
+    .btn-msg:hover { border-color: var(--green); color: #fff; }
+    .empty-state { background: rgba(26,31,46,0.5); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 64px 32px; text-align: center; color: var(--muted); }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 14px; color: var(--subtle); }
+    .empty-state a { color: var(--green); text-decoration: none; font-weight: 600; display: inline-block; margin-top: 12px; }
+    @media (max-width: 700px) { .ob-nav-links { display: none; } .page { padding: 16px; } }
+    /* Modal */
+    .req-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 9000; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .req-overlay.open { display: flex; }
+    .req-box { background: rgba(26,31,46,0.85); backdrop-filter: blur(28px) saturate(200%); -webkit-backdrop-filter: blur(28px) saturate(200%); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 28px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,0.07); }
+    .req-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 4px; }
+    .req-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+    .req-field { margin-bottom: 14px; }
+    .req-field label { display: block; font-size: 11px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .req-field input { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; color: var(--text); outline: none; }
+    .req-field input:focus { border-color: var(--green); }
+    .req-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .req-submit { flex: 1; background: var(--green); border: none; color: #fff; padding: 11px; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .req-submit:hover { background: var(--gd); }
+    .req-cancel-btn { background: var(--card2); border: 1px solid var(--border); color: var(--muted); padding: 11px 18px; border-radius: 9px; font-size: 14px; cursor: pointer; }
+    .req-msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 10px; display: none; }
+    .req-msg.ok { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+    .req-msg.err { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.3); }
   </style>
 </head>
 <body>
-  <nav>
-    <div class="container">
-      <div class="nav-brand">Obturo</div>
-      <ul class="nav-links">
-        <li><a href="{% url 'dashboard' %}">🏠 Dashboard</a></li>
-        <li><a href="{% url 'stations' %}">🔍 Explore</a></li>
-        <li><a href="{% url 'bookings' %}">📋 Bookings</a></li>
-        <li><a href="{% url 'ranking' %}">Ranking</a></li>
-        <li><a href="{% url 'favorites' %}">Favorites</a></li>
-        <li><a href="{% url 'profile' %}">👤 Profile</a></li>
-      </ul>
-      <div style="display: flex; gap: 20px; align-items: center;">
-        <span style="color: white;">👤 {{ username }}</span>
-        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
-      </div>
+<nav class="ob-nav" id="mainNav">
+  <div class="ob-nav-inner">
+    <a class="ob-logo" href="{% url 'dashboard' %}">
+      <div class="ob-logo-icon"><i class="fa fa-plug"></i></div>Obturo EV
+    </a>
+    <div class="ob-nav-links">
+      <a href="{% url 'dashboard' %}">Dashboard</a>
+      <a href="{% url 'stations' %}">Stations</a>
+      <a href="{% url 'peer_chargers' %}" class="active">Peer Chargers</a>
+      <a href="{% url 'bookings' %}">Bookings</a>
     </div>
-  </nav>
-  
-  <div class="container">
-    <h1>Peer-to-Peer Chargers</h1>
-    
-    <div class="header-info">
-      <p><strong>Connect with nearby EV owners!</strong></p>
-      <p>Share charging stations from personal chargers in your community. Rent or lend charging access from verified users nearby.</p>
+    <div class="ob-nav-actions">
+      <a href="{% url 'logout' %}" class="ob-btn-out">Sign Out</a>
     </div>
-    
-    {% if chargers %}
-      <div class="chargers-grid">
-        {% for charger in chargers %}
-          <div class="charger-card">
-            <div class="card-header">
-              <div class="charger-owner">👤 Owner: {{ charger.owner }}</div>
-              <div class="charger-name">{{ charger.name }}</div>
-              <div class="charger-address">{{ charger.address }}</div>
-            </div>
-            
-            <div class="card-body">
-              <div class="specs">
-                <div class="spec">
-                  <div class="spec-label">Connector</div>
-                  <div class="spec-value">{{ charger.connector_type }}</div>
-                </div>
-                <div class="spec">
-                  <div class="spec-label">Power</div>
-                  <div class="spec-value">{{ charger.power_kw }} kW</div>
-                </div>
-                <div class="spec">
-                  <div class="spec-label">Price</div>
-                  <div class="spec-value">₹{{ charger.price_per_kwh }}/kWh</div>
-                </div>
-                <div class="spec">
-                  <div class="spec-label">Status</div>
-                  <div class="spec-value">{% if charger.is_active %}Active{% else %}Inactive{% endif %}</div>
-                </div>
-              </div>
-              
-              <div class="actions">
-                <button class="btn btn-primary">Request</button>
-                <button class="btn btn-secondary">💬 Message</button>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="no-chargers">
-        <div class="no-chargers-icon"></div>
-        <h2>No Peer Chargers Nearby</h2>
-        <p style="color: #666; margin: 12px 0 20px;">There are no community chargers available in your area right now. Check back later or explore public charging stations.</p>
-        <a href="{% url 'stations' %}" style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Find Public Stations</a>
-      </div>
-    {% endif %}
   </div>
-  <!-- Include Active Bookings Sidebar -->
-  {% include 'web/includes/active_bookings_sidebar.html' %}
+</nav>
+
+<div class="page">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Peer-to-Peer Chargers</div>
+      <div class="page-sub">Community charging stations from verified EV owners.</div>
+    </div>
+  </div>
+
+  <div class="info-banner">
+    <i class="fa fa-handshake"></i>
+    <div>
+      <div class="ib-title">Connect with your EV community</div>
+      <div class="ib-sub">Rent charging access from nearby verified users or share your own charger to earn.</div>
+    </div>
+  </div>
+
+  {% if chargers %}
+  <div class="chargers-grid">
+    {% for charger in chargers %}
+    <div class="ch-card">
+      <div class="ch-header">
+        <div class="ch-owner"><i class="fa fa-user-circle" style="color:var(--green)"></i> {{ charger.owner }}</div>
+        <div class="ch-name">{{ charger.name }}</div>
+        <div class="ch-addr"><i class="fa fa-location-dot" style="color:var(--green)"></i> {{ charger.address }}</div>
+      </div>
+      <div class="ch-specs">
+        <div class="sp-item"><div class="sp-lbl">Connector</div><div class="sp-val">{{ charger.connector_type }}</div></div>
+        <div class="sp-item"><div class="sp-lbl">Power</div><div class="sp-val">{{ charger.power_kw }} kW</div></div>
+        <div class="sp-item"><div class="sp-lbl">Price</div><div class="sp-val">₹{{ charger.price_per_kwh }}/kWh</div></div>
+        <div class="sp-item"><div class="sp-lbl">Status</div><div class="sp-val" style="color:{% if charger.is_active %}var(--green){% else %}var(--subtle){% endif %}">{% if charger.is_active %}Active{% else %}Inactive{% endif %}</div></div>
+      </div>
+      <div class="ch-actions">
+        <button class="btn-req" data-charger-id="{{ charger.id }}" data-charger-name="{{ charger.name }}" onclick="openReqModal(this)"><i class="fa fa-calendar-plus"></i> Request</button>
+        <button class="btn-msg" disabled title="Messaging coming soon"><i class="fa fa-comment"></i></button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fa fa-plug-circle-xmark"></i>
+    <div style="font-size:1.1rem;font-weight:700;">No peer chargers nearby</div>
+    <div style="font-size:14px;color:var(--subtle);margin-top:6px;">Check back later or explore public stations.</div>
+    <a href="{% url 'stations' %}">Find Public Stations →</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- P2P Booking Modal -->
+<div class="req-overlay" id="reqOverlay">
+  <div class="req-box">
+    <div class="req-title"><i class="fa fa-calendar-plus" style="color:var(--green)"></i>&nbsp; Request Charger</div>
+    <div class="req-sub" id="reqModalSub">Set your charging window</div>
+    <div class="req-field"><label>Start Time</label><input type="datetime-local" id="reqStart"></div>
+    <div class="req-field"><label>End Time</label><input type="datetime-local" id="reqEnd"></div>
+    <div class="req-msg" id="reqMsg"></div>
+    <div class="req-actions">
+      <button class="req-cancel-btn" onclick="closeReqModal()">Cancel</button>
+      <button class="req-submit" id="reqSubmit" onclick="submitReq()"><i class="fa fa-check"></i> Send Request</button>
+    </div>
+  </div>
+</div>
+
+{% include 'web/includes/active_bookings_sidebar.html' %}
+<script>
+var _reqChargerId=null;
+var _authToken="{{ auth_token }}";
+function openReqModal(btn){
+  _reqChargerId=btn.dataset.chargerId;
+  document.getElementById('reqModalSub').textContent='Requesting: '+btn.dataset.chargerName;
+  var now=new Date();now.setSeconds(0,0);
+  var s=new Date(now.getTime()+3600000),e=new Date(s.getTime()+3600000);
+  var fmt=d=>d.toISOString().slice(0,16);
+  document.getElementById('reqStart').value=fmt(s);
+  document.getElementById('reqEnd').value=fmt(e);
+  var msg=document.getElementById('reqMsg');msg.style.display='none';msg.className='req-msg';
+  var sb=document.getElementById('reqSubmit');sb.disabled=false;sb.innerHTML='<i class="fa fa-check"></i> Send Request';
+  document.getElementById('reqOverlay').classList.add('open');
+}
+function closeReqModal(){document.getElementById('reqOverlay').classList.remove('open');}
+function getCsrfP2P(){return(document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)')||[])[2]||'';}
+async function submitReq(){
+  var start=document.getElementById('reqStart').value,end=document.getElementById('reqEnd').value;
+  var msg=document.getElementById('reqMsg'),sb=document.getElementById('reqSubmit');
+  if(!start||!end){msg.textContent='Please fill both times.';msg.className='req-msg err';msg.style.display='block';return;}
+  if(start>=end){msg.textContent='End must be after start.';msg.className='req-msg err';msg.style.display='block';return;}
+  sb.disabled=true;sb.textContent='Sending...';
+  try{
+    var r=await fetch('/api/p2p/book/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrfP2P(),'Authorization':'Bearer '+_authToken},body:JSON.stringify({charger_id:parseInt(_reqChargerId),start_time:start+':00',end_time:end+':00'})});
+    var d=await r.json();
+    if(r.ok){msg.textContent='Request sent! Owner will be notified. (Booking #'+d.booking_id+')';msg.className='req-msg ok';msg.style.display='block';sb.textContent='Sent!';setTimeout(closeReqModal,2500);}
+    else{msg.textContent=d.error||'Something went wrong.';msg.className='req-msg err';msg.style.display='block';sb.disabled=false;sb.innerHTML='<i class="fa fa-check"></i> Send Request';}
+  }catch(e){msg.textContent='Network error. Try again.';msg.className='req-msg err';msg.style.display='block';sb.disabled=false;sb.innerHTML='<i class="fa fa-check"></i> Send Request';}
+}
+</script>
+<script>
+(function(){var nav=document.getElementById('mainNav');if(!nav)return;var lastY=0;function upd(){var y=window.scrollY||window.pageYOffset;if(y<10){nav.style.background='transparent';nav.style.borderBottomColor='transparent';}else if(y<lastY){nav.style.background='rgba(26,31,46,.97)';nav.style.borderBottomColor='var(--border)';}else{nav.style.background='rgba(26,31,46,.6)';nav.style.borderBottomColor='transparent';}lastY=y;}window.addEventListener('scroll',upd,{passive:true});upd();})();
+</script>
 </body>
 </html>

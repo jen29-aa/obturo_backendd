@@ -28,6 +28,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     '10.0.2.2',
+    '172.30.27.79',
+    '172.20.10.4',   # Current local network IP for phone testing
 ]
 
 
@@ -138,6 +140,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     "DEFAULT_PAGINATION_CLASS": None
@@ -159,6 +162,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://10.0.2.2:8000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://172.30.27.79:8000",  # Local network IP for physical device testing
 ]
 
 # Session settings

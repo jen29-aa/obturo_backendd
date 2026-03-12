@@ -25,6 +25,7 @@ from .models import (
     StationRating,
     UserPenalty,
     Waitlist,
+    StationReport,
 )
 from .serializers import (
     ChargingStationSerializer,
@@ -343,7 +344,9 @@ def create_booking(request):
         last = Waitlist.objects.filter(station=station).order_by("-position").first()
         next_pos = (last.position + 1) if last else 1
 
-        Waitlist.objects.create(user=user, station=station, position=next_pos)
+        from django.utils import timezone
+        expires_at = timezone.now() + timedelta(minutes=30)
+        Waitlist.objects.create(user=user, station=station, position=next_pos, expires_at=expires_at)
 
         # Send waitlist notification email asynchronously
         threading.Thread(
@@ -516,6 +519,8 @@ def topsis_custom(request):
             {
                 "id": st.id,
                 "name": st.name,
+                "latitude": float(st.latitude),
+                "longitude": float(st.longitude),
                 "available_slots": st.available_slots,
                 "power_kw": st.power_kw,
                 "waiting_time": st.waiting_time,
@@ -660,7 +665,55 @@ def cancel_booking(request):
 
 
 # ---------------------------------------------------------
-# 7b. GET WAITLIST POSITION
+# 7b. JOIN WAITLIST
+# ---------------------------------------------------------
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def join_waitlist(request):
+    station_id = request.data.get("station_id")
+    if not station_id:
+        return Response({"error": "station_id required"}, status=400)
+
+    try:
+        station = ChargingStation.objects.get(id=station_id)
+    except ChargingStation.DoesNotExist:
+        return Response({"error": "Station not found"}, status=404)
+
+    # Check if user already in waitlist
+    if Waitlist.objects.filter(user=request.user, station=station).exists():
+        return Response({"error": "Already in waitlist"}, status=400)
+
+    # Get next position
+    max_pos = Waitlist.objects.filter(station=station).aggregate(
+        models.Max('position'))['position__max'] or 0
+    new_position = max_pos + 1
+
+    # Create waitlist entry
+    from django.utils import timezone
+    expires_at = timezone.now() + timedelta(minutes=30)
+    entry = Waitlist.objects.create(
+        user=request.user,
+        station=station,
+        position=new_position,
+        expires_at=expires_at
+    )
+
+    # Send notification
+    send_waitlist_notification_email(
+        user_email=request.user.email,
+        station_name=station.name,
+        position=new_position
+    )
+
+    return Response({
+        "message": "Added to waitlist",
+        "position": new_position,
+        "station": station.name
+    })
+
+
+# ---------------------------------------------------------
+# 7c. GET WAITLIST POSITION
 # ---------------------------------------------------------
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -683,6 +736,30 @@ def get_waitlist_position(request):
         "position": info["position"],
         "estimated_wait_minutes": info["estimated_wait_minutes"]
     })
+
+
+# ---------------------------------------------------------
+# 7d. LEAVE WAITLIST
+# ---------------------------------------------------------
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def leave_waitlist(request):
+    station_id = request.data.get("station_id")
+    if not station_id:
+        return Response({"error": "station_id required"}, status=400)
+
+    try:
+        station = ChargingStation.objects.get(id=station_id)
+    except ChargingStation.DoesNotExist:
+        return Response({"error": "Station not found"}, status=404)
+
+    try:
+        entry = Waitlist.objects.get(user=request.user, station=station)
+        entry.delete()
+        reorder_waitlist(station)
+        return Response({"message": "Removed from waitlist"})
+    except Waitlist.DoesNotExist:
+        return Response({"error": "Not in waitlist"}, status=404)
 
 
 # ---------------------------------------------------------
@@ -774,17 +851,61 @@ def map_nearby_stations(request):
 
 
 def min_distance_to_route(station, route_points):
-    distances = [
-        calculate_distance(station.latitude, station.longitude, pt["lat"], pt["lng"])
-        for pt in route_points
-    ]
-    return min(distances)
+    """Calculate minimum distance from station to the route path (perpendicular distance to route segments)"""
+    if len(route_points) < 2:
+        # If only one point, return distance to that point
+        return calculate_distance(station.latitude, station.longitude, route_points[0]["lat"], route_points[0]["lng"])
+    
+    min_dist = float('inf')
+    
+    # Check perpendicular distance to each route segment
+    for i in range(len(route_points) - 1):
+        p1 = route_points[i]
+        p2 = route_points[i + 1]
+        
+        # Calculate perpendicular distance from station to line segment
+        # Using the point-to-line-segment distance formula
+        lat1, lng1 = p1["lat"], p1["lng"]
+        lat2, lng2 = p2["lat"], p2["lng"]
+        lat0, lng0 = station.latitude, station.longitude
+        
+        # Convert to approximate meters (rough approximation)
+        # 1 degree lat ≈ 111 km, 1 degree lng ≈ 111 * cos(lat) km
+        x1, y1 = lng1 * 111000 * np.cos(np.radians(lat1)), lat1 * 111000
+        x2, y2 = lng2 * 111000 * np.cos(np.radians(lat2)), lat2 * 111000
+        x0, y0 = lng0 * 111000 * np.cos(np.radians(lat0)), lat0 * 111000
+        
+        # Perpendicular distance formula
+        numerator = abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1)
+        denominator = np.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
+        
+        if denominator > 0:
+            dist_meters = numerator / denominator
+        else:
+            dist_meters = calculate_distance(lat0, lng0, lat1, lng1) * 1000
+        
+        # Check if perpendicular point is within segment bounds
+        if denominator > 0:
+            t = ((x0 - x1) * (x2 - x1) + (y0 - y1) * (y2 - y1)) / (denominator ** 2)
+            if 0 <= t <= 1:
+                # Perpendicular point is within segment
+                min_dist = min(min_dist, dist_meters / 1000)  # Convert back to km
+            else:
+                # Perpendicular point is outside segment, use distance to nearest endpoint
+                dist_to_p1 = calculate_distance(lat0, lng0, lat1, lng1)
+                dist_to_p2 = calculate_distance(lat0, lng0, lat2, lng2)
+                min_dist = min(min_dist, dist_to_p1, dist_to_p2)
+        else:
+            dist_to_p1 = calculate_distance(lat0, lng0, lat1, lng1)
+            min_dist = min(min_dist, dist_to_p1)
+    
+    return min_dist if min_dist != float('inf') else float('inf')
 
 
 @api_view(["POST"])
 def stations_along_route(request):
     route = request.data.get("route")
-    radius = float(request.data.get("radius", 5))
+    radius = float(request.data.get("radius", 2))  # Reduced from 5 to 2 km for better accuracy
     connector = request.data.get("connector")
 
     if not route:
@@ -796,8 +917,9 @@ def stations_along_route(request):
 
     result = []
     for st in qs:
-        if is_station_near_route(st, route, radius):
-            dist = min_distance_to_route(st, route)
+        dist = min_distance_to_route(st, route)
+        # Only include stations that are actually near the route
+        if dist <= radius:
             result.append({
                 "id": st.id,
                 "name": st.name,
@@ -816,7 +938,7 @@ def stations_along_route(request):
 @api_view(["POST"])
 def best_charge_stops(request):
     route = request.data.get("route")
-    radius = float(request.data.get("radius", 5))
+    radius = float(request.data.get("radius", 2))  # Reduced default from 5 to 2 km
     max_stops = int(request.data.get("max_stops", 3))
 
     if not route:
@@ -824,8 +946,11 @@ def best_charge_stops(request):
 
     candidates = []
     for st in ChargingStation.objects.all():
-        if is_station_near_route(st, route, radius):
-            dist = min_distance_to_route(st, route)
+        # Calculate actual distance from station to route
+        dist = min_distance_to_route(st, route)
+        
+        # Only include stations actually near the route (within radius)
+        if dist <= radius:
             score = (st.available_slots * 2) + (st.power_kw * 1.5) - (dist * 0.5)
             candidates.append({
                 "id": st.id,
@@ -1078,6 +1203,7 @@ def p2p_owner_requests(request):
 def rate_station(request):
     station_id = request.data.get("station_id")
     rating = request.data.get("rating")
+    review = request.data.get("review", "")  # Optional review text
 
     if not station_id or rating is None:
         return Response({"error": "station_id and rating required"}, status=400)
@@ -1098,10 +1224,14 @@ def rate_station(request):
     obj, created = StationRating.objects.update_or_create(
         user=request.user,
         station=station,
-        defaults={"rating": rating_val},
+        defaults={"rating": rating_val, "review": review},
     )
 
-    return Response({"message": "Rating saved" if created else "Rating updated", "rating": rating_val})
+    return Response({
+        "message": "Rating saved" if created else "Rating updated",
+        "rating": rating_val,
+        "review": review
+    })
 
 
 from django.db.models import Avg, Count
@@ -1110,7 +1240,24 @@ from django.db.models import Avg, Count
 @api_view(["GET"])
 def station_rating(request, station_id):
     avg = StationRating.objects.filter(station_id=station_id).aggregate(avg=Avg("rating"))["avg"]
-    return Response({"station_id": station_id, "avg_rating": round(avg or 0, 2)})
+    count = StationRating.objects.filter(station_id=station_id).count()
+    
+    # Get recent reviews with user info
+    ratings = StationRating.objects.filter(station_id=station_id).select_related('user')[:10]
+    reviews_data = [{
+        "username": r.user.username,
+        "rating": r.rating,
+        "review": r.review,
+        "helpful_count": r.helpful_count,
+        "created_at": r.created_at.strftime("%Y-%m-%d %H:%M"),
+    } for r in ratings if r.review]  # Only include reviews with text
+    
+    return Response({
+        "station_id": station_id,
+        "avg_rating": round(avg or 0, 2),
+        "total_ratings": count,
+        "reviews": reviews_data
+    })
 
 
 @api_view(["GET"])
@@ -1625,3 +1772,156 @@ def admin_station_management(request):
         'stations': stations_data,
         'total_count': len(stations_data),
     })
+
+
+# ============================================================
+# CROWD-SOURCED STATION REPORTS
+# ============================================================
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def submit_report(request):
+    station_id  = request.data.get("station_id")
+    report_type = request.data.get("report_type")
+    note        = request.data.get("note", "")[:200]
+
+    VALID = ['broken', 'queue', 'closed', 'offline', 'clean']
+    if not station_id or report_type not in VALID:
+        return Response({"error": "station_id and valid report_type required"}, status=400)
+
+    try:
+        station = ChargingStation.objects.get(id=station_id)
+    except ChargingStation.DoesNotExist:
+        return Response({"error": "Station not found"}, status=404)
+
+    expires_at = timezone.now() + timedelta(hours=2)
+    report = StationReport.objects.create(
+        station=station, user=request.user,
+        report_type=report_type, note=note, expires_at=expires_at,
+    )
+    return Response({"message": "Report submitted", "report_id": report.id,
+                     "expires_at": expires_at.isoformat()})
+
+
+@api_view(["GET"])
+def get_station_reports(request, station_id):
+    now = timezone.now()
+    reports = StationReport.objects.filter(station_id=station_id, expires_at__gt=now)
+    return Response([{
+        "id": r.id,
+        "report_type": r.report_type,
+        "note": r.note,
+        "user": r.user.username if r.user else "Anonymous",
+        "created_at": r.created_at.isoformat(),
+        "expires_at": r.expires_at.isoformat(),
+        "upvotes": r.upvotes,
+        "minutes_ago": max(0, int((now - r.created_at).total_seconds() / 60)),
+    } for r in reports])
+
+
+@api_view(["GET"])
+def get_all_active_reports(request):
+    now = timezone.now()
+    reports = StationReport.objects.filter(expires_at__gt=now).select_related('station')
+    return Response([{
+        "id": r.id,
+        "station_id": r.station.id,
+        "station_name": r.station.name,
+        "latitude": r.station.latitude,
+        "longitude": r.station.longitude,
+        "report_type": r.report_type,
+        "note": r.note,
+        "user": r.user.username if r.user else "Anonymous",
+        "created_at": r.created_at.isoformat(),
+        "expires_at": r.expires_at.isoformat(),
+        "upvotes": r.upvotes,
+        "minutes_ago": max(0, int((now - r.created_at).total_seconds() / 60)),
+    } for r in reports])
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def upvote_report(request):
+    report_id = request.data.get("report_id")
+    try:
+        r = StationReport.objects.get(id=report_id, expires_at__gt=timezone.now())
+        r.upvotes += 1
+        r.save(update_fields=['upvotes'])
+        return Response({"upvotes": r.upvotes})
+    except StationReport.DoesNotExist:
+        return Response({"error": "Report not found or expired"}, status=404)
+
+
+import requests as _req_lib
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def geocode_search(request):
+    q = request.query_params.get('q', '').strip()
+    if not q:
+        return Response([], status=200)
+    try:
+        resp = _req_lib.get(
+            'https://nominatim.openstreetmap.org/search',
+            params={'q': q, 'format': 'json', 'limit': '7', 'countrycodes': 'in'},
+            headers={'User-Agent': 'ObturoEV-Backend/1.0'},
+            timeout=10,
+        )
+        results = resp.json()
+        data = [
+            {
+                'name': r.get('name', ''),
+                'display_name': r.get('display_name', ''),
+                'lat': r.get('lat'),
+                'lon': r.get('lon'),
+                'type': r.get('type', ''),
+            }
+            for r in results
+        ]
+        return Response(data)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def osrm_proxy(request):
+    """Proxy OSRM routing requests so the device doesn't need external internet."""
+    origin_lat = request.query_params.get('origin_lat')
+    origin_lng = request.query_params.get('origin_lng')
+    dest_lat   = request.query_params.get('dest_lat')
+    dest_lng   = request.query_params.get('dest_lng')
+    if not all([origin_lat, origin_lng, dest_lat, dest_lng]):
+        return Response({'error': 'Missing parameters'}, status=400)
+    try:
+        url = (
+            f'https://router.project-osrm.org/route/v1/driving/'
+            f'{origin_lng},{origin_lat};{dest_lng},{dest_lat}'
+            f'?overview=full&geometries=geojson'
+        )
+        resp = _req_lib.get(url, timeout=20)
+        return Response(resp.json())
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+from django.http import HttpResponse
+from rest_framework.permissions import AllowAny
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def tile_proxy(request, z, x, y):
+    """Proxy map tiles from CartoCDN so the device doesn't need external internet."""
+    try:
+        url = f'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+        resp = _req_lib.get(
+            url,
+            headers={'User-Agent': 'ObturoEV-Backend/1.0'},
+            timeout=10,
+        )
+        return HttpResponse(
+            resp.content,
+            content_type=resp.headers.get('Content-Type', 'image/png'),
+        )
+    except Exception:
+        return HttpResponse(status=503)

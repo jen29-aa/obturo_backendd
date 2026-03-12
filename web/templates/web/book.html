@@ -1,0 +1,163 @@
+﻿{% extends 'web/base.html' %}
+{% block content %}
+<style>
+  :root { --green:#22c55e; --gd:#16a34a; --bg:#131720; --card:#1a1f2e; --card2:#222836; --border:#2a3142; --text:#f1f5f9; --muted:#94a3b8; --subtle:#64748b; }
+  .bk-wrap { max-width:520px; margin:40px auto; padding:0 16px 60px; }
+  .bk-card { background:rgba(26,31,46,0.7); backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px); border:1px solid rgba(255,255,255,0.09); border-radius:18px; padding:32px; color:#f1f5f9; box-shadow:0 8px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07); }
+  .bk-title { font-size:1.5rem; font-weight:900; color:var(--green); margin-bottom:6px; display:flex; align-items:center; gap:10px; }
+  .bk-sub { color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .bk-label { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:var(--subtle); margin-bottom:8px; display:block; }
+  .bk-section { margin-bottom:22px; }
+  /* Quick preset chips */
+  .preset-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .preset-chip { padding:7px 14px; background:var(--card2); border:1px solid var(--border); border-radius:20px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .preset-chip:hover { border-color:var(--green); color:var(--green); }
+  .preset-chip.selected { background:rgba(34,197,94,.12); border-color:rgba(34,197,94,.4); color:var(--green); }
+  /* Input rows */
+  .time-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .bk-input { width:100%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:11px 14px; font-size:14px; color:#f1f5f9; outline:none; transition:border-color .15s; }
+  .bk-input:focus { border-color:rgba(34,197,94,.5); }
+  .bk-input[type=date]::-webkit-calendar-picker-indicator,
+  .bk-input[type=time]::-webkit-calendar-picker-indicator { filter:invert(0.7); cursor:pointer; }
+  input[type=date].bk-input, input[type=time].bk-input { color-scheme:dark; }
+  /* Duration display */
+  .duration-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25); border-radius:20px; padding:5px 13px; font-size:12px; font-weight:800; color:var(--green); margin-top:10px; }
+  /* Summary row */
+  .bk-summary { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-radius:10px; padding:14px 16px; margin-bottom:20px; display:none; }
+  .bk-summary.show { display:block; }
+  .bk-sum-row { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+  .bk-sum-lbl { color:var(--muted); }
+  .bk-sum-val { font-weight:800; }
+  /* Buttons */
+  .bk-btn { width:100%; padding:14px; background:var(--green); border:none; border-radius:11px; color:#fff; font-weight:900; font-size:1rem; cursor:pointer; transition:background .15s; margin-top:4px; }
+  .bk-btn:hover { background:var(--gd); }
+  .bk-back { display:block; text-align:center; margin-top:16px; color:var(--muted); font-size:13px; font-weight:600; text-decoration:none; }
+  .bk-back:hover { color:var(--green); }
+  .err-msg { background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.25); border-radius:8px; padding:10px 14px; color:#f87171; font-size:13px; margin-bottom:16px; }
+</style>
+
+<div class="bk-wrap">
+  <div class="bk-card">
+    <div class="bk-title"><i class="fa fa-bolt"></i> Book Charging Slot</div>
+    <div class="bk-sub">Choose your session time below</div>
+
+    {% if error %}
+      <div class="err-msg"><i class="fa fa-triangle-exclamation"></i> {{ error }}</div>
+    {% endif %}
+
+    <form method="post" id="bookForm">
+      {% csrf_token %}
+
+      <!-- Quick presets -->
+      <div class="bk-section">
+        <label class="bk-label"><i class="fa fa-clock"></i> Quick Start</label>
+        <div class="preset-row">
+          <div class="preset-chip" onclick="applyPreset(0,30)">Now + 30 min</div>
+          <div class="preset-chip" onclick="applyPreset(0,60)">Now + 1 hr</div>
+          <div class="preset-chip" onclick="applyPreset(0,90)">Now + 1.5 hr</div>
+          <div class="preset-chip" onclick="applyPreset(0,120)">Now + 2 hr</div>
+          <div class="preset-chip" id="chipCustom" onclick="showCustom()">Custom…</div>
+        </div>
+      </div>
+
+      <!-- Custom time picker (hidden until needed) -->
+      <div class="bk-section" id="customSection" style="display:none;">
+        <label class="bk-label"><i class="fa fa-calendar-days"></i> Date &amp; Time</label>
+        <div style="margin-bottom:12px;">
+          <input type="date" id="pickDate" class="bk-input" onchange="recalc()">
+        </div>
+        <div class="time-grid">
+          <div>
+            <div style="font-size:11px;color:var(--subtle);font-weight:700;margin-bottom:6px;">Start Time</div>
+            <input type="time" id="pickStart" class="bk-input" onchange="recalc()">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--subtle);font-weight:700;margin-bottom:6px;">End Time</div>
+            <input type="time" id="pickEnd" class="bk-input" onchange="recalc()">
+          </div>
+        </div>
+        <div id="durationBadge" class="duration-badge" style="display:none;"><i class="fa fa-stopwatch"></i> <span id="durationText"></span></div>
+      </div>
+
+      <!-- Hidden fields submitted to backend -->
+      <input type="hidden" name="start_time" id="start_time">
+      <input type="hidden" name="end_time"   id="end_time">
+
+      <!-- Summary -->
+      <div class="bk-summary" id="bkSummary">
+        <div class="bk-sum-row"><span class="bk-sum-lbl">Start</span><span class="bk-sum-val" id="sumStart">--</span></div>
+        <div class="bk-sum-row"><span class="bk-sum-lbl">End</span><span class="bk-sum-val" id="sumEnd">--</span></div>
+        <div class="bk-sum-row"><span class="bk-sum-lbl">Duration</span><span class="bk-sum-val" id="sumDur">--</span></div>
+      </div>
+
+      <button type="submit" class="bk-btn" id="submitBtn" disabled><i class="fa fa-bolt"></i> Book Now</button>
+    </form>
+
+    <a href="{% url 'stations' %}" class="bk-back"><i class="fa fa-arrow-left"></i> Back to Stations</a>
+  </div>
+</div>
+
+<script>
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function fmtDT(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+  function fmtTime(d){ return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+  function fmtDisp(d){ return d.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}); }
+
+  // Set today's date as default in custom picker
+  const today = new Date();
+  document.getElementById('pickDate').value = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  document.getElementById('pickStart').value = `${pad(today.getHours())}:${pad(today.getMinutes())}`;
+  const t1 = new Date(today.getTime()+60*60*1000);
+  document.getElementById('pickEnd').value = `${pad(t1.getHours())}:${pad(t1.getMinutes())}`;
+
+  function setHiddenFields(start, end){
+    document.getElementById('start_time').value = fmtDT(start);
+    document.getElementById('end_time').value   = fmtDT(end);
+    const dur = Math.round((end-start)/60000);
+    const h = Math.floor(dur/60), m = dur%60;
+    document.getElementById('sumStart').textContent = fmtDisp(start);
+    document.getElementById('sumEnd').textContent   = fmtDisp(end);
+    document.getElementById('sumDur').textContent   = (h?h+'h ':'')+m+'min';
+    document.getElementById('bkSummary').classList.add('show');
+    document.getElementById('submitBtn').disabled = (dur <= 0);
+  }
+
+  function applyPreset(offsetMins, durationMins){
+    document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('selected'));
+    event.target.classList.add('selected');
+    document.getElementById('customSection').style.display='none';
+    const start = new Date(Date.now() + offsetMins*60000);
+    const end   = new Date(start.getTime() + durationMins*60000);
+    setHiddenFields(start, end);
+  }
+
+  function showCustom(){
+    document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('selected'));
+    document.getElementById('chipCustom').classList.add('selected');
+    document.getElementById('customSection').style.display='block';
+    recalc();
+  }
+
+  function recalc(){
+    const dateVal  = document.getElementById('pickDate').value;
+    const startVal = document.getElementById('pickStart').value;
+    const endVal   = document.getElementById('pickEnd').value;
+    if(!dateVal||!startVal||!endVal) return;
+    const start = new Date(`${dateVal}T${startVal}`);
+    const end   = new Date(`${dateVal}T${endVal}`);
+    if(isNaN(start)||isNaN(end)) return;
+    const dur = Math.round((end-start)/60000);
+    const badge = document.getElementById('durationBadge');
+    if(dur > 0){
+      const h=Math.floor(dur/60),m=dur%60;
+      document.getElementById('durationText').textContent = (h?h+' hr ':'')+m+' min session';
+      badge.style.display='inline-flex';
+      setHiddenFields(start,end);
+    } else {
+      badge.style.display='none';
+      document.getElementById('submitBtn').disabled=true;
+      document.getElementById('bkSummary').classList.remove('show');
+    }
+  }
+</script>
+{% endblock %}

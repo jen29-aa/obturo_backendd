@@ -1,331 +1,558 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Obturo - My Bookings</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Bookings – Obturo EV</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #131720; --card: #1a1f2e; --card2: #222836; --border: #2a3142;
+      --green: #22c55e; --gd: #16a34a; --text: #f1f5f9; --muted: #94a3b8; --subtle: #64748b;
+      --blue: #60a5fa; --orange: #fb923c; --red: #f87171;
     }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f0fdf4;
-    }
-    
-    /* Main container */
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-    
-    h1 {
-      font-size: 36px;
-      color: #065f46;
-      margin-bottom: 40px;
-    }
-
-    .alert-error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-    
-    /* Booking cards */
-    .bookings-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 20px;
-    }
-    
-    .booking-card {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      transition: all 0.2s;
-    }
-    
-    .booking-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
-    }
-
-    .error-alert {
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .error-alert button {
-      background: transparent;
-      border: none;
-      color: #721c24;
-      cursor: pointer;
-      font-size: 20px;
-    }
-    
-    .booking-header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      padding: 20px;
-    }
-    
-    .station-name {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    
-    .booking-status {
-      display: inline-block;
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    
-    .booking-card[data-status="active"] .booking-header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    }
-    
-    .booking-card[data-status="completed"] .booking-header {
-      background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-    }
-    
-    .booking-card[data-status="cancelled"] .booking-header {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    }
-    
-    .booking-body {
-      padding: 20px;
-    }
-    
-    .booking-time {
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    
-    .time-label {
-      font-size: 12px;
-      color: #999;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    
-    .time-value {
-      font-size: 14px;
-      color: #333;
-      font-weight: 600;
-    }
-    
-    .booking-actions {
-      display: flex;
-      gap: 10px;
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary {
-      background: #10b981;
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: #059669;
-    }
-    
-    .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
-      border: 1px solid #ddd;
-    }
-    
-    .btn-secondary:hover {
-      background: #e0e0e0;
-    }
-    
-    .btn-danger {
-      background: #f44336;
-      color: white;
-    }
-    
-    .btn-danger:hover {
-      background: #d32f2f;
-    }
-    
-    .no-bookings {
-      text-align: center;
-      padding: 60px 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    
-    .no-bookings-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-    
-    .no-bookings h2 {
-      font-size: 20px;
-      margin-bottom: 8px;
-      color: #065f46;
-    }
-    
-    .no-bookings p {
-      color: #666;
-      margin-bottom: 20px;
-    }
-    
-    .no-bookings a {
-      display: inline-block;
-      background: #10b981;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    
-    .no-bookings a:hover {
-      background: #059669;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    /* NAV */
+    .ob-nav { background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; transition: background .3s, border-color .3s; }
+    .ob-nav-inner { max-width: 1440px; margin: 0 auto; padding: 0 32px; height: 64px; display: flex; align-items: center; gap: 28px; }
+    .ob-logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; color: #fff; text-decoration: none; flex-shrink: 0; }
+    .ob-logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
+    .ob-nav-links { display: flex; gap: 24px; }
+    .ob-nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .15s; padding-bottom: 2px; border-bottom: 2px solid transparent; }
+    .ob-nav-links a:hover { color: #fff; }
+    .ob-nav-links a.active { color: #fff; border-bottom-color: var(--green); }
+    .ob-nav-actions { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+    .ob-btn-out { background: transparent; border: 1px solid var(--border); color: #fff; padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: border-color .15s; }
+    .ob-btn-out:hover { border-color: var(--green); color: var(--green); }
+    /* PAGE */
+    .page { max-width: 1440px; margin: 0 auto; padding: 28px 32px 60px; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
+    .page-title { font-size: 2rem; font-weight: 900; }
+    .page-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .btn-new-session { display: inline-flex; align-items: center; gap: 8px; background: var(--green); color: #fff; border: none; border-radius: 10px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; transition: background .15s; white-space: nowrap; flex-shrink: 0; }
+    .btn-new-session:hover { background: var(--gd); }
+    /* TABS */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .tab-btn { background: none; border: none; color: var(--subtle); font-size: 14px; font-weight: 600; padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; margin-bottom: -1px; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+    /* MAIN GRID */
+    .main-grid { display: grid; grid-template-columns: 1fr 400px; gap: 24px; align-items: start; }
+    /* BOOKING TABLE */
+    .bk-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .bk-table-head { display: grid; grid-template-columns: 2fr 1.4fr 1fr 56px; padding: 0 20px; height: 44px; align-items: center; border-bottom: 1px solid var(--border); }
+    .bk-th { font-size: 11px; font-weight: 800; color: var(--subtle); text-transform: uppercase; letter-spacing: .6px; }
+    .bk-row { display: grid; grid-template-columns: 2fr 1.4fr 1fr 56px; padding: 0 20px; min-height: 72px; align-items: center; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s; border-left: 3px solid transparent; }
+    .bk-row:last-of-type { border-bottom: none; }
+    .bk-row:hover { background: rgba(255,255,255,.03); }
+    .bk-row.selected { background: var(--card2); border-left-color: var(--green); }
+    .bk-row.is-active-booking { border-left-color: var(--green); }
+    .bk-station { display: flex; align-items: center; gap: 12px; }
+    .bk-icon { width: 40px; height: 40px; background: rgba(34,197,94,.1); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--green); flex-shrink: 0; }
+    .bk-icon.icon-past { background: rgba(100,116,139,.12); color: var(--muted); }
+    .bk-icon.icon-cancelled { background: rgba(248,113,113,.1); color: var(--red); }
+    .bk-name { font-size: 14px; font-weight: 700; }
+    .bk-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .bk-datetime .bk-date { font-size: 14px; font-weight: 600; }
+    .bk-datetime .bk-time { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .status-pill { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    .status-active   { background: rgba(34,197,94,.15);  color: var(--green); }
+    .status-upcoming { background: rgba(96,165,250,.15); color: var(--blue); }
+    .status-completed{ background: rgba(100,116,139,.15); color: var(--muted); }
+    .status-cancelled{ background: rgba(248,113,113,.15); color: var(--red); }
+    .bk-action-btn { background: none; border: none; color: var(--subtle); font-size: 16px; padding: 8px; border-radius: 8px; cursor: pointer; transition: all .12s; }
+    .bk-action-btn:hover { color: #fff; background: var(--border); }
+    .bk-pagination { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+    .pg-btns { display: flex; gap: 6px; }
+    .pg-btn { background: var(--card2); border: 1px solid var(--border); border-radius: 7px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 13px; transition: all .12s; }
+    .pg-btn:hover { border-color: var(--green); color: var(--green); }
+    .empty-state { padding: 60px 32px; text-align: center; color: var(--muted); }
+    .empty-state i { font-size: 2.5rem; color: var(--subtle); margin-bottom: 14px; display: block; }
+    .empty-state a { color: var(--green); text-decoration: none; font-weight: 600; }
+    /* DETAIL PANEL */
+    .detail-panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; position: sticky; top: 80px; }
+    .detail-placeholder { padding: 60px 32px; text-align: center; color: var(--subtle); }
+    .detail-placeholder i { font-size: 2.5rem; margin-bottom: 14px; display: block; }
+    #detailMap { height: 180px; width: 100%; background: var(--card2); }
+    .map-dist-badge { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.75); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; z-index: 800; pointer-events: none; }
+    .map-nav-btn { position: absolute; bottom: 12px; left: 12px; background: var(--card); color: var(--text); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; z-index: 800; box-shadow: 0 2px 8px rgba(0,0,0,.4); text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .map-nav-btn:hover { background: var(--card2); }
+    .map-locate-btn { position: absolute; bottom: 12px; right: 12px; width: 36px; height: 36px; background: var(--card); border: none; border-radius: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 800; box-shadow: 0 2px 8px rgba(0,0,0,.4); color: var(--text); font-size: 14px; }
+    .map-locate-btn:hover { background: var(--card2); }
+    .detail-body { padding: 18px 20px 20px; }
+    .detail-station-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .detail-address { font-size: 13px; color: var(--muted); margin-bottom: 16px; display: flex; align-items: flex-start; gap: 6px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .info-card { background: var(--card2); border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; }
+    .info-card-lbl { font-size: 11px; color: var(--subtle); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+    .info-card-val { font-size: 15px; font-weight: 800; }
+    .qr-section { background: var(--card2); border: 1px solid var(--border); border-radius: 11px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .qr-img { width: 72px; height: 72px; background: #fff; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .qr-img img { width: 100%; height: 100%; object-fit: contain; }
+    .qr-text-title { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+    .qr-text-sub { font-size: 12px; color: var(--muted); }
+    .btn-start { width: 100%; padding: 13px; background: var(--green); border: none; border-radius: 10px; color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .15s; margin-bottom: 10px; text-decoration: none; }
+    .btn-start:hover { background: var(--gd); }
+    .btn-cancel { width: 100%; padding: 12px; background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.3); border-radius: 10px; color: var(--red); font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all .15s; }
+    .btn-cancel:hover { background: rgba(248,113,113,.15); border-color: var(--red); }
+    .btn-directions { width: 100%; padding: 12px; background: rgba(96,165,250,.08); border: 1px solid rgba(96,165,250,.25); border-radius: 10px; color: var(--blue); font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all .15s; text-decoration: none; margin-bottom: 10px; }
+    .btn-directions:hover { background: rgba(96,165,250,.15); }
+    .divider { border: none; border-top: 1px dashed var(--border); margin: 14px 0; }
+    @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } .detail-panel { position: static; } }
+    @media (max-width: 640px) { .page { padding: 16px; } .ob-nav-links { display: none; } .bk-table-head, .bk-row { grid-template-columns: 2fr 1fr 44px; } }
   </style>
 </head>
 <body>
-  
-  <!-- Main content -->
-  <div class="container">
-    <h1>📋 My Bookings</h1>
-    
-    {% if error_msg %}
-      <div class="error-alert">
-        <span>{{ error_msg }}</span>
-        <button onclick="this.parentElement.style.display='none';">&times;</button>
-      </div>
-    {% endif %}
-    
-    {% if bookings %}
-      <div class="bookings-grid">
-        {% for booking in bookings %}
-          <div class="booking-card" data-status="{{ booking.status }}">
-            <div class="booking-header">
-              <div class="station-name">{{ booking.station_name }}</div>
-              <div class="booking-status">{{ booking.status|title }}</div>
+
+<nav class="ob-nav" id="mainNav">
+  <div class="ob-nav-inner">
+    <a class="ob-logo" href="/home/">
+      <div class="ob-logo-icon"><i class="fa fa-plug"></i></div>Obturo EV
+    </a>
+    <div class="ob-nav-links">
+      <a href="/stations/">Find Stations</a>
+      <a href="/bookings/" class="active">My Bookings</a>
+      <a href="/ranking/">Ranking</a>
+      <a href="/route-map/">Route Planner</a>
+    </div>
+    <div class="ob-nav-actions">
+      {% if user.is_authenticated %}
+        <a href="/profile/" class="ob-btn-out"><i class="fa fa-user-circle"></i> {{ user.username }}</a>
+        <a href="{% url 'logout' %}" class="ob-btn-out">Sign Out</a>
+      {% else %}
+        <a href="/" class="ob-btn-out">Sign In</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">My Bookings</div>
+      <div class="page-sub">Manage your upcoming charging sessions and view history.</div>
+    </div>
+    <a href="/stations/" class="btn-new-session"><i class="fa fa-circle-plus"></i> Book New Session</a>
+  </div>
+
+  {% if error_msg %}
+  <div style="background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:12px 16px;color:var(--red);font-size:14px;margin-bottom:18px;">
+    <i class="fa fa-circle-xmark"></i> {{ error_msg }}
+  </div>
+  {% endif %}
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-upcoming" onclick="selectTab('upcoming')">Upcoming ({{ bookings_upcoming|length }})</button>
+    <button class="tab-btn" id="tab-past" onclick="selectTab('past')">Past</button>
+    <button class="tab-btn" id="tab-cancelled" onclick="selectTab('cancelled')">Cancelled</button>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- LEFT: BOOKING LISTS -->
+    <div>
+
+      <!-- Upcoming -->
+      <div id="list-upcoming">
+        {% if bookings_upcoming %}
+        <div class="bk-wrap">
+          <div class="bk-table-head">
+            <div class="bk-th">Station Details</div>
+            <div class="bk-th">Date &amp; Time</div>
+            <div class="bk-th">Status</div>
+            <div class="bk-th"></div>
+          </div>
+          {% for booking in bookings_upcoming %}
+          <div class="bk-row {% if forloop.first %}is-active-booking selected{% endif %}"
+               id="bkrow-{{ booking.id }}"
+               onclick="selectBooking('{{ booking.id }}')"
+               data-id="{{ booking.id }}"
+               data-name="{{ booking.station_name|escapejs }}"
+               data-addr="{{ booking.station_address|default:''|escapejs }}"
+               data-lat="{{ booking.station_latitude|default:'' }}"
+               data-lon="{{ booking.station_longitude|default:'' }}"
+               data-connector="{{ booking.connector_type|default:'N/A'|escapejs }}"
+               data-power="{{ booking.power_kw|default:'N/A' }}"
+               data-cost="{{ booking.price_per_kwh|default:'N/A' }}"
+               data-charger="{{ booking.charger_type|default:'N/A'|escapejs }}"
+               data-status="{{ booking.status|lower }}"
+               data-start="{{ booking.start_time|default:'' }}"
+               data-end="{{ booking.end_time|default:'' }}">
+            <div class="bk-station">
+              <div class="bk-icon"><i class="fa fa-bolt"></i></div>
+              <div>
+                <div class="bk-name">{{ booking.station_name }}</div>
+                <div class="bk-sub">{{ booking.charger_type|default:"" }} · {{ booking.connector_type|default:"" }}</div>
+              </div>
             </div>
-            
-            <div class="booking-body">
-              <div class="booking-time">
-                <div class="time-label">Booked On</div>
-                <div class="time-value">{{ booking.created_at|default:"N/A" }}</div>
-              </div>
-              
-              <div class="booking-time">
-                <div class="time-label">Start Time</div>
-                <div class="time-value">{{ booking.start_time|default:"N/A" }}</div>
-              </div>
-              
-              <div class="booking-time">
-                <div class="time-label">End Time</div>
-                <div class="time-value">{{ booking.end_time|default:"N/A" }}</div>
-              </div>
-              
-              <div class="booking-actions">
-                {% if booking.status == "active" %}
-                  <a href="javascript:void(0);" class="btn btn-primary start-charging-btn" data-start="{{ booking.start_time }}" data-end="{{ booking.end_time }}" data-station="{{ booking.station_id }}" data-booking="{{ booking.id }}" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i class="fas fa-bolt"></i> Start Charging
-                  </a>
-                  <form method="post" style="flex: 1;">
-                    {% csrf_token %}
-                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
-                    <button type="submit" name="action" value="cancel" class="btn btn-danger" style="width: 100%;">Cancel</button>
-                  </form>
-                {% else %}
-                  <button class="btn btn-secondary" disabled>{{ booking.status|title }}</button>
-                {% endif %}
-              </div>
+            <div class="bk-datetime">
+              <div class="bk-date">{{ booking.start_time|slice:"0:10" }}</div>
+              <div class="bk-time">{{ booking.start_time|slice:"11:16" }} – {{ booking.end_time|slice:"11:16" }}</div>
+            </div>
+            <div>
+              {% if booking.status|lower == 'active' %}
+                <span class="status-pill status-active">● Active</span>
+              {% else %}
+                <span class="status-pill status-upcoming">Upcoming</span>
+              {% endif %}
+            </div>
+            <div>
+              <button class="bk-action-btn" onclick="event.stopPropagation(); openActionMenu('{{ booking.id }}', this)" title="More options"><i class="fa fa-ellipsis-vertical"></i></button>
             </div>
           </div>
-        {% endfor %}
+          {% endfor %}
+          <div class="bk-pagination">
+            <span>Showing {{ bookings_upcoming|length }} upcoming booking{{ bookings_upcoming|length|pluralize }}</span>
+            <div class="pg-btns"><button class="pg-btn"><i class="fa fa-chevron-left"></i></button><button class="pg-btn"><i class="fa fa-chevron-right"></i></button></div>
+          </div>
+        </div>
+        {% else %}
+        <div class="bk-wrap">
+          <div class="empty-state">
+            <i class="fa fa-calendar-xmark"></i>
+            <div style="font-size:16px;font-weight:700;margin-bottom:8px;">No upcoming bookings</div>
+            <div style="margin-bottom:14px;">Time to plan your next charging stop!</div>
+            <a href="/stations/">Find a Station →</a>
+          </div>
+        </div>
+        {% endif %}
       </div>
-    {% else %}
-      <div class="no-bookings">
-        <div class="no-bookings-icon">📭</div>
-        <h2>No Bookings Yet</h2>
-        <p>You haven't made any charging station bookings yet. Start exploring stations and make your first booking!</p>
-        <a href="{% url 'stations' %}">🔍 Find Stations</a>
+
+      <!-- Past -->
+      <div id="list-past" style="display:none;">
+        {% if bookings_past %}
+        <div class="bk-wrap">
+          <div class="bk-table-head">
+            <div class="bk-th">Station Details</div>
+            <div class="bk-th">Date &amp; Time</div>
+            <div class="bk-th">Status</div>
+            <div class="bk-th"></div>
+          </div>
+          {% for booking in bookings_past %}
+          <div class="bk-row"
+               id="bkrow-{{ booking.id }}"
+               onclick="selectBooking('{{ booking.id }}')"
+               data-id="{{ booking.id }}"
+               data-name="{{ booking.station_name|escapejs }}"
+               data-addr="{{ booking.station_address|default:''|escapejs }}"
+               data-lat="{{ booking.station_latitude|default:'' }}"
+               data-lon="{{ booking.station_longitude|default:'' }}"
+               data-connector="{{ booking.connector_type|default:'N/A'|escapejs }}"
+               data-power="{{ booking.power_kw|default:'N/A' }}"
+               data-cost="{{ booking.price_per_kwh|default:'N/A' }}"
+               data-charger="{{ booking.charger_type|default:'N/A'|escapejs }}"
+               data-status="{{ booking.status|lower }}"
+               data-start="{{ booking.start_time|default:'' }}"
+               data-end="{{ booking.end_time|default:'' }}">
+            <div class="bk-station">
+              <div class="bk-icon icon-past"><i class="fa fa-circle-check"></i></div>
+              <div>
+                <div class="bk-name">{{ booking.station_name }}</div>
+                <div class="bk-sub">{{ booking.charger_type|default:"" }} · {{ booking.connector_type|default:"" }}</div>
+              </div>
+            </div>
+            <div class="bk-datetime">
+              <div class="bk-date">{{ booking.start_time|slice:"0:10" }}</div>
+              <div class="bk-time">{{ booking.start_time|slice:"11:16" }} – {{ booking.end_time|slice:"11:16" }}</div>
+            </div>
+            <div><span class="status-pill status-completed">Completed</span></div>
+            <div>
+              <button class="bk-action-btn" onclick="event.stopPropagation(); openActionMenu('{{ booking.id }}', this)" title="More options"><i class="fa fa-ellipsis-vertical"></i></button>
+            </div>
+          </div>
+          {% endfor %}
+          <div class="bk-pagination">
+            <span>Showing {{ bookings_past|length }} past booking{{ bookings_past|length|pluralize }}</span>
+            <div class="pg-btns"><button class="pg-btn"><i class="fa fa-chevron-left"></i></button><button class="pg-btn"><i class="fa fa-chevron-right"></i></button></div>
+          </div>
+        </div>
+        {% else %}
+        <div class="bk-wrap"><div class="empty-state"><i class="fa fa-history"></i><div>No past bookings found.</div></div></div>
+        {% endif %}
       </div>
-    {% endif %}
+
+      <!-- Cancelled -->
+      <div id="list-cancelled" style="display:none;">
+        {% if bookings_cancelled %}
+        <div class="bk-wrap">
+          <div class="bk-table-head">
+            <div class="bk-th">Station Details</div>
+            <div class="bk-th">Date &amp; Time</div>
+            <div class="bk-th">Status</div>
+            <div class="bk-th"></div>
+          </div>
+          {% for booking in bookings_cancelled %}
+          <div class="bk-row"
+               id="bkrow-{{ booking.id }}"
+               onclick="selectBooking('{{ booking.id }}')"
+               data-id="{{ booking.id }}"
+               data-name="{{ booking.station_name|escapejs }}"
+               data-addr="{{ booking.station_address|default:''|escapejs }}"
+               data-lat="{{ booking.station_latitude|default:'' }}"
+               data-lon="{{ booking.station_longitude|default:'' }}"
+               data-connector="{{ booking.connector_type|default:'N/A'|escapejs }}"
+               data-power="{{ booking.power_kw|default:'N/A' }}"
+               data-cost="{{ booking.price_per_kwh|default:'N/A' }}"
+               data-charger="{{ booking.charger_type|default:'N/A'|escapejs }}"
+               data-status="{{ booking.status|lower }}"
+               data-start="{{ booking.start_time|default:'' }}"
+               data-end="{{ booking.end_time|default:'' }}">
+            <div class="bk-station">
+              <div class="bk-icon icon-cancelled"><i class="fa fa-ban"></i></div>
+              <div>
+                <div class="bk-name">{{ booking.station_name }}</div>
+                <div class="bk-sub">{{ booking.charger_type|default:"" }} · {{ booking.connector_type|default:"" }}</div>
+              </div>
+            </div>
+            <div class="bk-datetime">
+              <div class="bk-date">{{ booking.start_time|slice:"0:10" }}</div>
+              <div class="bk-time">{{ booking.start_time|slice:"11:16" }} – {{ booking.end_time|slice:"11:16" }}</div>
+            </div>
+            <div><span class="status-pill status-cancelled">Cancelled</span></div>
+            <div>
+              <button class="bk-action-btn" onclick="event.stopPropagation(); openActionMenu('{{ booking.id }}', this)" title="More options"><i class="fa fa-ellipsis-vertical"></i></button>
+            </div>
+          </div>
+          {% endfor %}
+          <div class="bk-pagination">
+            <span>Showing {{ bookings_cancelled|length }} cancelled booking{{ bookings_cancelled|length|pluralize }}</span>
+            <div class="pg-btns"><button class="pg-btn"><i class="fa fa-chevron-left"></i></button><button class="pg-btn"><i class="fa fa-chevron-right"></i></button></div>
+          </div>
+        </div>
+        {% else %}
+        <div class="bk-wrap"><div class="empty-state"><i class="fa fa-circle-xmark"></i><div>No cancelled bookings.</div></div></div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- RIGHT: DETAIL PANEL -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-placeholder" id="detailPlaceholder">
+        <i class="fa fa-bolt" style="color:var(--green);"></i>
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px;">Select a booking</div>
+        <div style="font-size:13px;">to view full details</div>
+      </div>
+      <!-- Map -->
+      <div id="mapWrap" style="display:none;position:relative;">
+        <div id="detailMap"></div>
+        <div class="map-dist-badge" id="mapDistBadge">Station Location</div>
+        <a href="#" id="mapOpenBtn" class="map-nav-btn" target="_blank"><i class="fa fa-map"></i> Open Map</a>
+        <button class="map-locate-btn" onclick="recenterMap()" title="Re-center"><i class="fa fa-location-crosshairs"></i></button>
+      </div>
+      <!-- Detail body -->
+      <div class="detail-body" id="detailBody" style="display:none;">
+        <div class="detail-station-name" id="dStationName">–</div>
+        <div class="detail-address"><i class="fa fa-location-dot" style="color:var(--muted);margin-top:2px;flex-shrink:0;"></i><span id="dAddress">–</span></div>
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-lbl"><i class="fa fa-plug"></i> Connector</div>
+            <div class="info-card-val" id="dConnector">–</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-lbl"><i class="fa fa-bolt"></i> Max Power</div>
+            <div class="info-card-val" id="dPower">–</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-lbl"><i class="fa fa-indian-rupee-sign"></i> Price/kWh</div>
+            <div class="info-card-val" id="dCost">–</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-lbl"><i class="fa fa-car"></i> Vehicle</div>
+            <div class="info-card-val" id="dVehicle">{{ user.username }}</div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="qr-section">
+          <div class="qr-img"><img id="dQrImg" src="" alt="QR Code"></div>
+          <div>
+            <div class="qr-text-title">Scan to Activate</div>
+            <div class="qr-text-sub">Use at the terminal to start your charging session.</div>
+          </div>
+        </div>
+        <div id="dActionButtons"></div>
+      </div>
+    </div>
+
   </div>
-  
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.start-charging-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          const now = new Date().getTime();
-          const startTime = new Date(this.dataset.start).getTime();
-          const endTime = new Date(this.dataset.end).getTime();
-          const station = this.dataset.station;
-          const booking = this.dataset.booking;
-          
-          if (now < startTime) {
-            alert(`Charging starts at ${new Date(startTime).toLocaleString()}`);
-            return;
-          }
-          if (now > endTime) {
-            alert('Your booking time has ended.');
-            return;
-          }
-          // Pass end time as URL parameter so charging session knows when to stop
-          window.location.href = `/charging-session/?station=${station}&booking=${booking}&endTime=${endTime}`;
-        });
-        
-        const now = new Date().getTime();
-        const startTime = new Date(btn.dataset.start).getTime();
-        const endTime = new Date(btn.dataset.end).getTime();
-        if (now < startTime || now > endTime) {
-          btn.style.opacity = '0.5';
-          btn.style.cursor = 'not-allowed';
+</div>
+
+<!-- Action Menu Popup -->
+<div id="actionMenu" style="display:none;position:fixed;z-index:9999;background:var(--card2);border:1px solid var(--border);border-radius:12px;min-width:168px;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;">
+  <div style="padding:8px 0;" id="actionMenuItems"></div>
+</div>
+
+{% include 'web/includes/sidebar_nav.html' %}
+{% include 'web/includes/active_bookings_sidebar.html' %}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+  let detailMap = null, detailMarker = null;
+  let currentBookingLat = null, currentBookingLon = null, currentBookingId = null;
+
+  function initDetailMap(lat, lon) {
+    if (!lat || !lon) return;
+    currentBookingLat = lat; currentBookingLon = lon;
+    document.getElementById('mapWrap').style.display = 'block';
+    if (!detailMap) {
+      detailMap = L.map('detailMap', { zoomControl: false, scrollWheelZoom: false, dragging: true, touchZoom: false, doubleClickZoom: false }).setView([lat, lon], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '', maxZoom: 19 }).addTo(detailMap);
+      L.control.zoom({ position: 'bottomright' }).addTo(detailMap);
+    } else {
+      detailMap.setView([lat, lon], 15);
+    }
+    if (detailMarker) detailMarker.remove();
+    detailMarker = L.marker([lat, lon], {
+      icon: L.divIcon({ html: '<div style="width:36px;height:36px;background:#22c55e;border:3px solid white;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:17px;">⚡</div>', iconSize: [36, 36], iconAnchor: [18, 18] })
+    }).addTo(detailMap);
+    setTimeout(() => { if (detailMap) detailMap.invalidateSize(); }, 120);
+  }
+
+  function recenterMap() {
+    if (detailMap && currentBookingLat && currentBookingLon) detailMap.setView([currentBookingLat, currentBookingLon], 15);
+  }
+
+  function selectBooking(id) {
+    document.querySelectorAll('.bk-row').forEach(r => r.classList.remove('selected'));
+    const row = document.getElementById('bkrow-' + id);
+    if (!row) return;
+    row.classList.add('selected');
+
+    const name      = row.dataset.name || '–';
+    const addr      = row.dataset.addr || 'Address not available';
+    const lat       = parseFloat(row.dataset.lat) || null;
+    const lon       = parseFloat(row.dataset.lon) || null;
+    const connector = row.dataset.connector || 'N/A';
+    const power     = row.dataset.power ? row.dataset.power + ' kW' : 'N/A';
+    const cost      = row.dataset.cost ? '₹' + parseFloat(row.dataset.cost).toFixed(2) : 'N/A';
+    const status    = row.dataset.status || '';
+    currentBookingId = id;
+
+    document.getElementById('detailPlaceholder').style.display = 'none';
+    document.getElementById('detailBody').style.display = 'block';
+    document.getElementById('dStationName').textContent = name;
+    document.getElementById('dAddress').textContent = addr;
+    document.getElementById('dConnector').textContent = connector;
+    document.getElementById('dPower').textContent = power;
+    document.getElementById('dCost').textContent = cost;
+    document.getElementById('dQrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=obturo-booking-' + id;
+
+    if (lat && lon) {
+      initDetailMap(lat, lon);
+      const gmapUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon;
+      document.getElementById('mapOpenBtn').href = gmapUrl;
+    } else {
+      document.getElementById('mapWrap').style.display = 'none';
+    }
+
+    const btnWrap = document.getElementById('dActionButtons');
+    let html = '';
+    if (lat && lon) {
+      const gmapDir = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon;
+      html += '<a href="' + gmapDir + '" class="btn-directions" target="_blank"><i class="fa fa-location-arrow"></i> Get Directions</a>';
+    }
+    if (status === 'active' || status === 'upcoming') {
+      html += '<button class="btn-start" onclick="startCharging(\'' + id + '\')"><i class="fa fa-play"></i> Start Charging</button>';
+      html += '<form method="post" style="margin:0;" onsubmit="return confirm(\'Cancel this booking?\')">'
+            + '<input type="hidden" name="csrfmiddlewaretoken" value="' + getCookie('csrftoken') + '">'
+            + '<input type="hidden" name="booking_id" value="' + id + '">'
+            + '<input type="hidden" name="action" value="cancel">'
+            + '<button type="submit" class="btn-cancel"><i class="fa fa-circle-xmark"></i> Cancel Booking</button></form>';
+    } else if (status === 'completed') {
+      html += '<button class="btn-start" style="background:var(--subtle);cursor:default;" disabled><i class="fa fa-circle-check"></i> Session Completed</button>';
+    } else if (status === 'cancelled') {
+      html += '<a href="/stations/" class="btn-start" style="text-decoration:none;"><i class="fa fa-circle-plus"></i> Book Again</a>';
+    }
+    btnWrap.innerHTML = html;
+  }
+
+  function startCharging(id) {
+    const row = document.getElementById('bkrow-' + id);
+    if (row) {
+      const startStr = row.dataset.start;
+      const endStr   = row.dataset.end;
+      if (startStr) {
+        const now       = new Date();
+        // Replace space with 'T' for reliable ISO-8601 parsing across browsers
+        const slotStart = new Date(startStr.replace(' ', 'T'));
+        const slotEnd   = endStr ? new Date(endStr.replace(' ', 'T')) : null;
+        const EARLY_MS  = 5 * 60 * 1000; // allow up to 5 min early
+
+        if (now < slotStart - EARLY_MS) {
+          const timeLabel = startStr.slice(11, 16); // "HH:MM"
+          const dateLabel = startStr.slice(0, 10);  // "YYYY-MM-DD"
+          alert('Your charging slot starts at ' + timeLabel + ' on ' + dateLabel + '.\nThe Start Charging button will be enabled 5 minutes before your slot.');
+          return;
         }
-      });
+        if (slotEnd && now > slotEnd) {
+          alert('Your booking slot has already ended. Please make a new booking.');
+          return;
+        }
+      }
+    }
+    try { localStorage.setItem('obturo.activeBookingId', String(id)); } catch(e) {}
+    window.location.href = '/charging-session/?booking=' + id;
+  }
+
+  function selectTab(tab) {
+    ['upcoming', 'past', 'cancelled'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+      document.getElementById('list-' + t).style.display = t === tab ? 'block' : 'none';
     });
-  </script>
-  
-  <!-- Include Sidebar Navigation -->
-  {% include 'web/includes/sidebar_nav.html' %}
-  
-  <!-- Include Active Bookings Sidebar -->
-  {% include 'web/includes/active_bookings_sidebar.html' %}
-  
-  <!-- Include Charging Widget -->
-  {% include 'web/includes/charging_widget.html' %}
+    const firstRow = document.querySelector('#list-' + tab + ' .bk-row');
+    if (firstRow) { selectBooking(firstRow.dataset.id); }
+    else {
+      document.getElementById('detailPlaceholder').style.display = 'block';
+      document.getElementById('detailBody').style.display = 'none';
+      document.getElementById('mapWrap').style.display = 'none';
+    }
+  }
+
+  function openActionMenu(id, btn) {
+    const menu = document.getElementById('actionMenu'), row = document.getElementById('bkrow-' + id);
+    const status = row ? row.dataset.status : '';
+    const rect = btn.getBoundingClientRect();
+    const s = 'display:block;padding:10px 16px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;';
+    let html = '<div style="' + s + '" onmouseover="this.style.background=\'var(--border)\'" onmouseout="this.style.background=\'\'" onclick="selectBooking(\'' + id + '\');closeMenu()"><i class="fa fa-eye" style="width:18px;color:var(--muted);"></i> View Details</div>';
+    if (row && row.dataset.lat && row.dataset.lon) {
+      const gmUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + row.dataset.lat + ',' + row.dataset.lon;
+      html += '<div style="' + s + '" onmouseover="this.style.background=\'var(--border)\'" onmouseout="this.style.background=\'\'" onclick="window.open(\'' + gmUrl + '\',\'_blank\');closeMenu()"><i class="fa fa-location-arrow" style="width:18px;color:var(--blue);"></i> Directions</div>';
+    }
+    if (status === 'active' || status === 'upcoming') {
+      html += '<div style="' + s + '" onmouseover="this.style.background=\'var(--border)\'" onmouseout="this.style.background=\'\'" onclick="startCharging(\'' + id + '\');closeMenu()"><i class="fa fa-play" style="width:18px;color:var(--green);"></i> Start Charging</div>';
+      html += '<hr style="border:none;border-top:1px solid var(--border);margin:4px 0;">';
+      html += '<div style="' + s + 'color:var(--red);" onmouseover="this.style.background=\'var(--border)\'" onmouseout="this.style.background=\'\'" onclick="cancelFromMenu(\'' + id + '\')"><i class="fa fa-xmark" style="width:18px;"></i> Cancel</div>';
+    }
+    document.getElementById('actionMenuItems').innerHTML = html;
+    menu.style.display = 'block';
+    menu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    menu.style.left = (rect.right + window.scrollX - 168) + 'px';
+    setTimeout(() => document.addEventListener('click', closeMenuOut, {once: true}), 10);
+  }
+
+  function closeMenu() { document.getElementById('actionMenu').style.display = 'none'; }
+  function closeMenuOut(e) { if (!document.getElementById('actionMenu').contains(e.target)) closeMenu(); }
+
+  function cancelFromMenu(id) {
+    closeMenu();
+    if (!confirm('Cancel this booking?')) return;
+    const form = document.createElement('form'); form.method = 'POST'; form.action = '';
+    ['csrfmiddlewaretoken|' + getCookie('csrftoken'), 'booking_id|' + id, 'action|cancel'].forEach(pair => {
+      const [n, v] = pair.split('|'); const i = document.createElement('input'); i.type = 'hidden'; i.name = n; i.value = v; form.appendChild(i);
+    });
+    document.body.appendChild(form); form.submit();
+  }
+
+  function getCookie(name) { const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)'); return v ? v.pop() : ''; }
+
+  window.addEventListener('load', () => selectTab('upcoming'));
+</script>
+<script>
+(function(){var nav=document.getElementById('mainNav');if(!nav)return;var lastY=0;function upd(){var y=window.scrollY||window.pageYOffset;if(y<10){nav.style.background='transparent';nav.style.borderBottomColor='transparent';}else if(y<lastY){nav.style.background='rgba(26,31,46,.97)';nav.style.borderBottomColor='var(--border)';}else{nav.style.background='rgba(26,31,46,.6)';nav.style.borderBottomColor='transparent';}lastY=y;}window.addEventListener('scroll',upd,{passive:true});upd();})();
+</script>
 </body>
 </html>

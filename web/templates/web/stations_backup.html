@@ -562,14 +562,14 @@
     <div class="header-content">
       <div style="display: flex; gap: 20px; align-items: center; flex: 1;">
         <a href="{% url 'home' %}" style="text-decoration: none; color: inherit;">
-          <div class="logo">Obturo</div>
+          <div class="logo">⚡ Obturo</div>
         </a>
         <!-- Navigation Links -->
         <div style="display: flex; gap: 25px; margin-left: 40px;">
           <a href="{% url 'home' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">🏠 Home</a>
           <a href="{% url 'stations' %}" style="color: #2c3e50; text-decoration: none; font-weight: 600; opacity: 1; border-bottom: 2px solid #1e88e5;">🔍 Explore</a>
           <a href="{% url 'bookings' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">📋 Bookings</a>
-          <a href="{% url 'ranking' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">Ranking</a>
+          <a href="{% url 'ranking' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">⭐ Ranking</a>
           <a href="{% url 'profile' %}" style="color: #666; text-decoration: none; font-weight: 500; opacity: 0.8;">👤 Profile</a>
         </div>
       </div>
@@ -600,7 +600,7 @@
       <div class="search-bar">
         <form method="get" style="display: flex; gap: 12px; width: 100%; flex-wrap: wrap;">
           <input type="text" name="q" class="search-input" placeholder="Search by city or location..." value="{{ current_filters.q }}">
-          <button type="button" class="search-btn" onclick="getMyLocation()">My Location</button>
+          <button type="button" class="search-btn" onclick="getMyLocation()">📍 My Location</button>
           <button type="submit" class="search-btn">🔍 Search</button>
           <input type="hidden" id="lat" name="lat" value="{{ current_filters.lat }}">
           <input type="hidden" id="lon" name="lon" value="{{ current_filters.lon }}">
@@ -609,8 +609,8 @@
       
       {% if has_location %}
         <div style="margin-bottom: 16px; padding: 12px; background: #e8f5e9; border-radius: 8px; color: #2e7d32; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #4caf50;">
-          <span>Showing stations within <strong id="radiusDisplay">{{ current_filters.radius }} km</strong> of your location (Lat: {{ current_filters.lat|floatformat:2 }}, Lon: {{ current_filters.lon|floatformat:2 }})</span>
-          <a href="javascript:void(0);" onclick="clearLocationAndSearch()" style="background: #e0e0e0; color: #2c3e50; padding: 6px 12px; border-radius: 4px; text-decoration: none; cursor: pointer; font-weight: 600; font-size: 13px;">Clear</a>
+          <span>✓ Showing stations within <strong id="radiusDisplay">{{ current_filters.radius }} km</strong> of your location (Lat: {{ current_filters.lat|floatformat:2 }}, Lon: {{ current_filters.lon|floatformat:2 }})</span>
+          <a href="javascript:void(0);" onclick="clearLocationAndSearch()" style="background: #e0e0e0; color: #2c3e50; padding: 6px 12px; border-radius: 4px; text-decoration: none; cursor: pointer; font-weight: 600; font-size: 13px;">✕ Clear</a>
         </div>
       {% endif %}
       
@@ -624,7 +624,7 @@
             <button type="button" onclick="setManualLocation()" class="search-btn" style="flex-shrink: 0; padding: 8px 16px;">Set Location</button>
             <button type="button" onclick="clearLocationCache()" class="search-btn" style="flex-shrink: 0; padding: 8px 16px; background: #757575;">Clear Cache</button>
           </div>
-          <p style="margin-top: 8px; font-size: 12px; color: #666;">Pro tip: Search by city name (e.g., "Delhi", "Mumbai") for accurate results</p>
+          <p style="margin-top: 8px; font-size: 12px; color: #666;">💡 Pro tip: Search by city name (e.g., "Delhi", "Mumbai") for accurate results</p>
         </details>
       </div>
       
@@ -712,7 +712,7 @@
     
     {% if stations %}
       <div class="results-header">
-        <div class="results-title">Results</div>
+        <div class="results-title">🔋 Results</div>
         <div class="results-count">Showing {{ stations|length }} station{{ stations|length|pluralize }}</div>
       </div>
       
@@ -726,7 +726,7 @@
               </div>
               <div class="status-badge">
                 {% if s.available_slots > 0 %}
-                  Available
+                  ✓ Available
                 {% else %}
                   ⚠️ Full (Waitlist)
                 {% endif %}
@@ -737,36 +737,36 @@
               {% if s.topsis_score %}
                 <div class="topsis-badge">
                   <div class="topsis-label">Quality Score</div>
-                  <div class="topsis-score">{{ s.topsis_score|floatformat:1 }}/1.0</div>
+                  <div class="topsis-score">{{ s.topsis_score|floatformat:1 }}/1.0 ⭐</div>
                 </div>
               {% endif %}
               <div class="specs-container">
                 <div class="spec">
-                  <div class="spec-icon"></div>
+                  <div class="spec-icon">⚙️</div>
                   <div class="spec-label">Type</div>
                   <div class="spec-value">{{ s.charger_type|default:"DC" }}</div>
                 </div>
                 
                 <div class="spec">
-                  <div class="spec-icon"></div>
+                  <div class="spec-icon">🔌</div>
                   <div class="spec-label">Connector</div>
                   <div class="spec-value">{{ s.connector_type|default:"CCS2" }}</div>
                 </div>
                 
                 <div class="spec">
-                  <div class="spec-icon"></div>
+                  <div class="spec-icon">⚡</div>
                   <div class="spec-label">Power</div>
                   <div class="spec-value">{{ s.power_kw|default:30 }}<span class="spec-unit">kW</span></div>
                 </div>
                 
                 <div class="spec">
-                  <div class="spec-icon"></div>
+                  <div class="spec-icon">💰</div>
                   <div class="spec-label">Price</div>
                   <div class="spec-value">₹{{ s.price_per_kwh|default:18 }}<span class="spec-unit">/kWh</span></div>
                 </div>
                 
                 <div class="spec">
-                  <div class="spec-icon"></div>
+                  <div class="spec-icon">⏱️</div>
                   <div class="spec-label">Wait</div>
                   <div class="spec-value">{{ s.waiting_time|default:5 }}<span class="spec-unit">min</span></div>
                 </div>
@@ -780,8 +780,8 @@
             </div>
             
             <div class="card-footer">
-              <button class="btn-primary" onclick="openBookingModal({{ s.id }}, '{{ s.name }}', {{ s.available_slots }})">Book Now</button>
-              <button class="btn-secondary" onclick="window.location.href='/station-detail/?id={{ s.id }}'">Details</button>
+              <button class="btn-primary" onclick="openBookingModal({{ s.id }}, '{{ s.name }}', {{ s.available_slots }})">⚡ Book Now</button>
+              <button class="btn-secondary" onclick="window.location.href='/station-detail/?id={{ s.id }}'">📍 Details</button>
               <button class="btn-secondary" onclick="toggleFavourite({{ s.id }}, this)">♥ Save</button>
             </div>
           </div>
@@ -900,16 +900,16 @@
           obturoIpAbortController = null;
         }
         saveUserLocation(lat, lon, source || 'confirmed');
-        console.log('SETTING LOCATION:', lat, lon, 'source:', source);
+        console.log('✓ SETTING LOCATION:', lat, lon, 'source:', source);
         document.getElementById('lat').value = lat;
         document.getElementById('lon').value = lon;
-        btn.textContent = 'Searching nearby...';
+        btn.textContent = '📍 Searching nearby...';
         btn.closest('form').submit();
       }
 
       function showLocationPrompt() {
         btn.disabled = false;
-        btn.textContent = 'My Location';
+        btn.textContent = '📍 My Location';
         const options = [
           { name: 'Udumbannoor (near Thodupuzha)', lat: 9.9060212, lon: 76.8142565 },
           { name: 'Thodupuzha (Town)', lat: 9.8976798, lon: 76.7134225 },
@@ -1269,7 +1269,7 @@
   <!-- Booking Modal -->
   <div id="bookingModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header">Book Charging Slot</div>
+      <div class="modal-header">⚡ Book Charging Slot</div>
       
       <div id="bookingAlert" class="alert" style="display: none;"></div>
       

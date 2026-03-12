@@ -25,6 +25,25 @@ def reorder_waitlist(station):
 
 
 # ---------------------------------------------------------
+# Get waitlist info for a user
+# ---------------------------------------------------------
+def get_waitlist_info(user, station):
+    """
+    Get user's waitlist position and estimated wait time.
+    Returns dict with position and estimated_wait_minutes, or None if not in waitlist.
+    """
+    try:
+        entry = Waitlist.objects.get(user=user, station=station)
+        wait_time = estimate_wait_time(station, entry.position)
+        return {
+            'position': entry.position,
+            'estimated_wait_minutes': wait_time
+        }
+    except Waitlist.DoesNotExist:
+        return None
+
+
+# ---------------------------------------------------------
 # Estimate waiting time (very simple heuristic)
 # ---------------------------------------------------------
 def estimate_wait_time(station, user_position):
